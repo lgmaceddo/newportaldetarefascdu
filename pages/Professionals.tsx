@@ -296,21 +296,21 @@ const Professionals: React.FC = () => {
                         >
                             <div className="p-4 flex flex-col gap-3 h-full">
                                 <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="flex items-start gap-3">
                                         <div className={`size-11 shrink-0 rounded-full flex items-center justify-center font-bold text-sm tracking-widest ${style.bg} ${style.text} relative`}>
                                             {getInitials(professional.name)}
                                             <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${getStatusDotColor(professional.status)}`}></div>
                                         </div>
 
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm leading-tight" title={professional.name}>
+                                        <div className="min-w-0 flex-1 flex flex-col">
+                                            <h3 className="font-bold text-gray-800 text-sm leading-tight whitespace-normal break-words" title={professional.name}>
                                                 {professional.name}
                                             </h3>
                                             <div className="flex flex-col gap-0.5 mt-0.5">
-                                                <p className="text-[10px] text-primary-dark font-bold uppercase tracking-wide">
+                                                <p className="text-[10px] text-primary-dark font-bold uppercase tracking-wide whitespace-normal break-words">
                                                     {professional.specialty}
                                                 </p>
-                                                <p className="text-[9px] text-gray-400 font-bold uppercase flex items-center gap-1">
+                                                <p className="text-[9px] text-gray-400 font-bold uppercase flex items-center gap-1 whitespace-normal break-words">
                                                     <span className="material-symbols-outlined text-[10px]">location_on</span>
                                                     {professional.sector}
                                                 </p>
