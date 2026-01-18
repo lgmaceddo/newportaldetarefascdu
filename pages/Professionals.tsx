@@ -285,7 +285,7 @@ const Professionals: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 pb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-6">
                 {filtered.map(professional => {
                     const style = getStyleByName(professional.name, professional.gender);
 
@@ -302,15 +302,15 @@ const Professionals: React.FC = () => {
                                             <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${getStatusDotColor(professional.status)}`}></div>
                                         </div>
 
-                                        <div className="min-w-0">
-                                            <h3 className="font-bold text-gray-800 text-sm leading-tight truncate" title={professional.name}>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm leading-tight" title={professional.name}>
                                                 {professional.name}
                                             </h3>
                                             <div className="flex flex-col gap-0.5 mt-0.5">
-                                                <p className="text-[10px] text-primary-dark font-bold uppercase tracking-wide truncate">
+                                                <p className="text-[10px] text-primary-dark font-bold uppercase tracking-wide">
                                                     {professional.specialty}
                                                 </p>
-                                                <p className="text-[9px] text-gray-400 font-bold uppercase truncate flex items-center gap-1">
+                                                <p className="text-[9px] text-gray-400 font-bold uppercase flex items-center gap-1">
                                                     <span className="material-symbols-outlined text-[10px]">location_on</span>
                                                     {professional.sector}
                                                 </p>
@@ -342,7 +342,7 @@ const Professionals: React.FC = () => {
                                     {professional.phone ? (
                                         <a
                                             href={`tel:${professional.phone}`}
-                                            className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-primary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg w-full truncate border border-transparent hover:border-primary/10"
+                                            className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-primary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg w-full border border-transparent hover:border-primary/10"
                                         >
                                             <span className={`material-symbols-outlined text-sm ${style.iconText}`}>call</span>
                                             {professional.phone}

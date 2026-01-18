@@ -96,7 +96,7 @@ const Receptionists: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 pb-6 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-6 overflow-y-auto pr-1">
                 {filtered.map(receptionist => (
                     <div
                         key={receptionist.id}
@@ -114,11 +114,12 @@ const Receptionists: React.FC = () => {
                                         <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${getStatusDotColor(receptionist.status)}`}></div>
                                     </div>
 
-                                    <div className="min-w-0">
-                                        <h3 className="font-bold text-gray-800 text-sm leading-tight truncate" title={receptionist.name}>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-bold text-gray-800 text-sm leading-tight" title={receptionist.name}>
                                             {receptionist.name}
                                         </h3>
-                                        <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wide mt-0.5 truncate">
+                                        <p className="text-[9px] text-gray-400 font-bold uppercase flex items-center gap-1 mt-1">
+                                            <span className="material-symbols-outlined text-[10px]">location_on</span>
                                             {receptionist.sector}
                                         </p>
                                     </div>
@@ -129,7 +130,7 @@ const Receptionists: React.FC = () => {
                                 {receptionist.phone ? (
                                     <a
                                         href={`tel:${receptionist.phone}`}
-                                        className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-secondary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg w-full truncate"
+                                        className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-secondary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg w-full"
                                     >
                                         <span className="material-symbols-outlined text-sm text-secondary">call</span>
                                         {receptionist.phone}
