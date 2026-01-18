@@ -292,9 +292,9 @@ const Professionals: React.FC = () => {
                     return (
                         <div
                             key={professional.id}
-                            className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col border border-gray-100 border-l-[6px] ${style.borderLeft}`}
+                            className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col border border-gray-100 border-l-[6px] ${style.borderLeft} min-h-[140px] h-full`}
                         >
-                            <div className="p-4 flex flex-col gap-3 h-full pt-6">
+                            <div className="p-4 flex flex-col gap-3 h-full">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-3 overflow-hidden">
                                         <div className={`size-11 shrink-0 rounded-full flex items-center justify-center font-bold text-sm tracking-widest ${style.bg} ${style.text} relative`}>

@@ -1,11 +1,14 @@
 import { DocumentAnalysisResult, ExtractedData } from "../types";
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Use Vite's asset loading to get the local worker path
-// This avoids CDN CORS issues and version mismatches
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+// Use a more robust worker loading pattern for cross-browser compatibility (Chrome, Firefox, Safari)
+// This ensures the worker is bundled and loaded correctly via Vite
+if (typeof window !== 'undefined' && 'Worker' in window) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url
+    ).toString();
+}
 
 /**
  * Text item with layout info

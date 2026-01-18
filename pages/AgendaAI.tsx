@@ -293,24 +293,6 @@ const AgendaAI: React.FC<AgendaAIProps> = ({ type = 'reschedule' }) => {
         }, 400);
     };
 
-    const convertToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                let encoded = reader.result?.toString().replace(/^data:(.*,)?/, '');
-                if (encoded) {
-                    if ((encoded.length % 4) > 0) {
-                        encoded += '='.repeat(4 - (encoded.length % 4));
-                    }
-                    resolve(encoded);
-                } else {
-                    reject("Error encoding file");
-                }
-            };
-            reader.onerror = (error) => reject(error);
-        });
-    };
 
     const handleBatchAnalyze = async () => {
         if (!file) return;
@@ -626,7 +608,7 @@ const AgendaAI: React.FC<AgendaAIProps> = ({ type = 'reschedule' }) => {
                                 >
                                     <input
                                         type="file"
-                                        accept="application/pdf,image/*"
+                                        accept="application/pdf"
                                         className="hidden"
                                         ref={fileInputRef}
                                         onChange={handleFileChange}
