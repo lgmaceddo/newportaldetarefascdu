@@ -61,23 +61,32 @@ const Tasks: React.FC = () => {
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
+                // Fetch all doctors
                 const { data, error } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('role', 'doctor');
 
                 if (error) throw error;
-                if (data && data.length > 0) {
-                    const mapped: Doctor[] = data.map((p: any) => ({
-                        id: p.id,
-                        name: p.name || 'Sem Nome',
-                        specialty: p.specialty || 'Geral',
-                        phone: p.phone || '',
-                        avatar: p.avatar || '',
-                        status: p.status || 'active',
-                        color: '',
-                        gender: p.gender
-                    }));
+                if (data) {
+                    const mapped: Doctor[] = data
+                        .map((p: any) => {
+                            const parts = (p.specialty || '').split(' | ');
+                            return {
+                                id: p.id,
+                                name: p.name || 'Sem Nome',
+                                specialty: (parts[0] || 'Geral').trim(),
+                                sector: (parts[1] || '').trim(), // Extract sector from specialty field
+                                phone: p.phone || '',
+                                avatar: p.avatar || '',
+                                status: p.status || 'active',
+                                color: '',
+                                gender: p.gender
+                            };
+                        })
+                        // Filter doctors to show only those assigned to the current selected floor
+                        .filter(doc => !doc.sector || doc.sector === selectedFloor);
+
                     setDoctors(mapped);
                 }
             } catch (err) {
@@ -85,7 +94,7 @@ const Tasks: React.FC = () => {
             }
         };
         fetchDoctors();
-    }, []);
+    }, [selectedFloor]);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
