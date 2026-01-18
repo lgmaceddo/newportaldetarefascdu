@@ -1,0 +1,5 @@
+{
+  "name": "MediPortal Unimed",
+  "description": "A comprehensive medical task portal featuring AI-powered agenda management, daily room mapping, internal chat, and digital notes.",
+  "requestFramePermissions": []
+}
