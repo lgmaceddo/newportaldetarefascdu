@@ -295,63 +295,65 @@ const Professionals: React.FC = () => {
                             className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col border border-gray-100 border-l-[6px] ${style.borderLeft} min-h-[140px] h-full`}
                         >
                             <div className="p-4 flex flex-col gap-3 h-full">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-start gap-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-3 w-full">
                                         <div className={`size-11 shrink-0 rounded-full flex items-center justify-center font-bold text-sm tracking-widest ${style.bg} ${style.text} relative`}>
                                             {getInitials(professional.name)}
                                             <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${getStatusDotColor(professional.status)}`}></div>
                                         </div>
 
                                         <div className="min-w-0 flex-1 flex flex-col">
-                                            <h3 className="font-bold text-gray-800 text-sm leading-tight whitespace-normal break-words" title={professional.name}>
+                                            <h3 className="font-black text-gray-800 text-sm leading-tight whitespace-normal break-words" title={professional.name}>
                                                 {professional.name}
                                             </h3>
-                                            <div className="flex flex-col gap-0.5 mt-0.5">
-                                                <p className="text-[10px] text-primary-dark font-bold uppercase tracking-wide whitespace-normal break-words">
+                                            <div className="flex flex-col gap-1 mt-1">
+                                                <p className="text-[10px] text-primary-dark font-bold uppercase tracking-wide whitespace-normal break-words opacity-80">
                                                     {professional.specialty}
                                                 </p>
                                                 <p className="text-[9px] text-gray-400 font-bold uppercase flex items-center gap-1 whitespace-normal break-words">
-                                                    <span className="material-symbols-outlined text-[10px]">location_on</span>
+                                                    <span className="material-symbols-outlined text-[11px]">location_on</span>
                                                     {professional.sector}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="mt-auto flex flex-col gap-2">
+                                    <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                                        {professional.phone ? (
+                                            <a
+                                                href={`tel:${professional.phone}`}
+                                                className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-primary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg flex-1 border border-transparent hover:border-primary/10"
+                                            >
+                                                <span className={`material-symbols-outlined text-sm ${style.iconText}`}>call</span>
+                                                {professional.phone}
+                                            </a>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400 italic px-2 py-1.5 flex-1 bg-gray-25/50 rounded flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-sm">phone_disabled</span>
+                                                Sem contato
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {isAdmin && (
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center justify-end gap-1.5 border-t border-gray-50/50 pt-2">
                                             <button
                                                 onClick={() => openModal(professional)}
-                                                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
-                                                title="Editar"
+                                                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-gray-500 hover:text-primary hover:bg-primary-light rounded-md transition-all uppercase tracking-wider"
                                             >
-                                                <span className="material-symbols-outlined text-lg">edit</span>
+                                                <span className="material-symbols-outlined text-base">edit</span>
+                                                Editar
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(professional.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                title="Excluir"
+                                                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-md transition-all uppercase tracking-wider"
                                             >
-                                                <span className="material-symbols-outlined text-lg">delete</span>
+                                                <span className="material-symbols-outlined text-base">delete</span>
+                                                Excluir
                                             </button>
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
-                                    {professional.phone ? (
-                                        <a
-                                            href={`tel:${professional.phone}`}
-                                            className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-primary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg w-full border border-transparent hover:border-primary/10"
-                                        >
-                                            <span className={`material-symbols-outlined text-sm ${style.iconText}`}>call</span>
-                                            {professional.phone}
-                                        </a>
-                                    ) : (
-                                        <span className="text-[10px] text-gray-400 italic px-2 py-1.5 w-full bg-gray-25/50 rounded flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-sm">phone_disabled</span>
-                                            Sem contato
-                                        </span>
                                     )}
                                 </div>
                             </div>
