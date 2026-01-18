@@ -66,6 +66,9 @@ const Dashboard: React.FC = () => {
             const savedTasks: Task[] = JSON.parse(localStorage.getItem('mediportal_tasks') || '[]');
             const savedNotes: Note[] = JSON.parse(localStorage.getItem('mediportal_notes') || '[]');
 
+            // Filter tasks by sector
+            const tasksWithSector = savedTasks.filter(t => !t.sector || t.sector === selectedFloor);
+
             setRooms(roomsData || []);
             setAllocations(allocsData);
 
@@ -75,13 +78,9 @@ const Dashboard: React.FC = () => {
             const totalDocs = new Set(allocsData.map(a => a.doctor_id)).size;
 
             // Calculate Task/Note Stats
-            const myPendingTasks = user?.role === 'doctor'
-                ? savedTasks.filter(t => t.assignedTo === user.id && t.status !== TaskStatus.DONE)
-                : savedTasks.filter(t => t.status !== TaskStatus.DONE);
+            const myPendingTasks = tasksWithSector.filter(t => (user?.role === 'doctor' ? t.assignedTo === user.id : true) && t.status !== TaskStatus.DONE);
 
-            const myPendingNotes = user?.role === 'doctor'
-                ? savedNotes.filter(n => n.to === user.id && n.status !== 'completed')
-                : savedNotes.filter(n => n.status !== 'completed');
+            const myPendingNotes = savedNotes.filter(n => (user?.role === 'doctor' ? n.to === user.id : true) && n.status !== 'completed');
 
             setStats({
                 pendingTasks: myPendingTasks.length,

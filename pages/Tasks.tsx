@@ -108,11 +108,16 @@ const Tasks: React.FC = () => {
         messageType: 'Receita',
         authorName: '',
         recipientId: '',
-        recipientName: ''
+        recipientName: '',
+        sector: selectedFloor // Default to current selected floor
     });
 
     // Filter Logic
     const filteredTasks = tasks.filter(task => {
+        // Sector Filtering: Only show tasks for the current selected floor
+        // (Legacy tasks without sector are shown for backward compatibility, or you can filter them out)
+        if (task.sector && task.sector !== selectedFloor) return false;
+
         if (filter === 'Active') {
             return task.status !== TaskStatus.DONE;
         }
@@ -150,7 +155,8 @@ const Tasks: React.FC = () => {
                 taskType: 'task',
                 messageType: 'Receita',
                 recipientId: '',
-                recipientName: ''
+                recipientName: '',
+                sector: selectedFloor
             });
             setSearchProfessional('');
         }
@@ -217,7 +223,8 @@ const Tasks: React.FC = () => {
                 taskType: cleanData.taskType as 'task' | 'message',
                 messageType: cleanData.messageType as 'Receita' | 'Medicamentos' | 'Outros',
                 authorName: user?.name || '',
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                sector: selectedFloor // Tie to the current active floor
             };
             setTasks(prev => [newTask, ...prev]);
         } else if (modalMode === 'edit' && currentTask) {

@@ -35,6 +35,7 @@ export interface Task {
   createdAt?: string;
   recipientId?: string; // ID of the professional (doctor)
   recipientName?: string; // Name of the professional (doctor)
+  sector?: string; // New: Sector/Floor where the task/message belongs
 }
 
 export interface Doctor {
