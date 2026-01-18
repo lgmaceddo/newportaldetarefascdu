@@ -1,10 +1,22 @@
-/* Global Styles */
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", sans-serif;
+  --font-script: "Dancing Script", cursive;
+
+  --color-primary: #0F766E;
+  --color-primary-dark: #10605B;
+  --color-primary-light: #E9EDEC;
+  --color-secondary: #2d3748;
+}
 
 @layer base {
   body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
+    background-color: #f1f5f9;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 
@@ -28,14 +40,91 @@
 }
 
 /* Hide scrollbar utility */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.1);
-    border-radius: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- GLOBAL DARK MODE OVERRIDES --- */
+.dark body {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.dark .bg-white {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-[#f0f2f5],
+.dark .bg-[#f8fafc],
+.dark .bg-[#f1f5f9] {
+  background-color: #0f172a !important;
+  color: #e2e8f0;
+  border-color: #1e293b !important;
+}
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-gray-400 {
+  color: #64748b !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: #334155 !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #334155 !important;
+  color: #fff !important;
+  border-color: #475569 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.dark aside {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.dark nav button:hover,
+.dark nav a:hover {
+  background-color: #334155 !important;
+  color: #fff !important;
 }
