@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-120px)] w-full max-w-7xl mx-auto px-1 sm:px-4 py-2 animate-in fade-in duration-700 overflow-hidden">
+        <div className="flex flex-col gap-6 h-full animate-in fade-in duration-700">
 
             {/* --- Compact Premium Header --- */}
             <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3 shrink-0">
@@ -169,8 +169,8 @@ const Dashboard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Main Content Grid: Full Screen without Scroll */}
-            <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 overflow-hidden">
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-12 gap-6">
 
                 {/* Left Panel: Operational Status (Ocupação das Salas) - More Compact */}
                 <div className="col-span-12 lg:col-span-8 flex flex-col gap-3 min-h-0">
@@ -184,7 +184,7 @@ const Dashboard: React.FC = () => {
                         </NavLink>
                     </div>
 
-                    <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         {rooms.map(room => {
                             const am = allocations.find(a => a.room_id === room.id && a.shift === 'morning');
                             const pm = allocations.find(a => a.room_id === room.id && a.shift === 'afternoon');
