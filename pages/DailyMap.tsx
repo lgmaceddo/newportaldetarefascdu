@@ -148,6 +148,9 @@ const DailyMap: React.FC = () => {
     const [showAllocationModal, setShowAllocationModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<{ roomId: string, shift: 'morning' | 'afternoon' } | null>(null);
+    const [allocationStartTime, setAllocationStartTime] = useState('');
+    const [allocationEndTime, setAllocationEndTime] = useState('');
+    const [allocationFullPeriod, setAllocationFullPeriod] = useState(true);
 
     // --- Helpers ---
     const formatDateKey = (date: Date) => {
@@ -162,6 +165,12 @@ const DailyMap: React.FC = () => {
 
     const getAllocation = (roomId: string, shift: 'morning' | 'afternoon') => {
         return allocations.find(a => a.room_id === roomId && a.shift === shift);
+    };
+
+    const getAllocationsForSlot = (roomId: string, shift: 'morning' | 'afternoon') => {
+        return allocations
+            .filter(a => a.room_id === roomId && a.shift === shift)
+            .sort((a, b) => (a.slot_index || 0) - (b.slot_index || 0));
     };
 
     const getDoctor = (doctorId: string) => doctors.find(d => d.id === doctorId);
@@ -254,45 +263,70 @@ const DailyMap: React.FC = () => {
         const { roomId, shift } = selectedSlot;
         try {
             const dateKey = formatDateKey(currentDate);
-            console.log('Finalizing allocation:', { doctorId, roomId, dateKey, shift });
+            const existingAllocations = getAllocationsForSlot(roomId, shift);
 
-            // Ensure we are sending the correct values
-            const { error } = await supabase.from('room_allocations').upsert({
+            if (existingAllocations.length >= 2) {
+                alert('Esta sala já possui 2 profissionais alocados neste período.');
+                return;
+            }
+
+            const nextSlotIndex = existingAllocations.length === 0 ? 0 : 1;
+
+            console.log('Finalizing allocation:', { doctorId, roomId, dateKey, shift, slot_index: nextSlotIndex });
+
+            const { error } = await supabase.from('room_allocations').insert({
                 room_id: roomId,
                 doctor_id: doctorId,
                 date: dateKey,
-                shift: shift, // This is explicitly 'morning' or 'afternoon'
+                shift: shift,
+                slot_index: nextSlotIndex,
+                start_time: allocationFullPeriod ? null : (allocationStartTime || null),
+                end_time: allocationFullPeriod ? null : (allocationEndTime || null),
                 created_by: user?.id
-            }, {
-                onConflict: 'room_id,date,shift'
             });
 
             if (error) throw error;
 
-            // Close modal first for better UX
-            setShowAllocationModal(false);
+            // Reset time fields
+            setAllocationStartTime('');
+            setAllocationEndTime('');
 
             // Refresh allocations
             await fetchAllocations();
+
+            // Close modal after refresh
+            setShowAllocationModal(false);
         } catch (error) {
             console.error('Failed to assign doctor:', error);
             alert('Erro ao realizar alocação: ' + (error as any).message);
         }
     };
 
-    const handleClearSlot = async () => {
+    const handleClearSlot = async (allocationId?: string) => {
         if (!selectedSlot) return;
         try {
             const dateKey = formatDateKey(currentDate);
-            const { error } = await supabase.from('room_allocations').delete()
-                .eq('room_id', selectedSlot.roomId)
-                .eq('date', dateKey)
-                .eq('shift', selectedSlot.shift);
 
-            if (error) throw error;
+            if (allocationId) {
+                // Remove a specific allocation
+                const { error } = await supabase.from('room_allocations').delete()
+                    .eq('id', allocationId);
+                if (error) throw error;
+            } else {
+                // Remove all allocations for this slot
+                const { error } = await supabase.from('room_allocations').delete()
+                    .eq('room_id', selectedSlot.roomId)
+                    .eq('date', dateKey)
+                    .eq('shift', selectedSlot.shift);
+                if (error) throw error;
+            }
 
             await fetchAllocations();
-            setShowAllocationModal(false);
+
+            // If we removed one specific allocation, stay open; otherwise close
+            if (!allocationId) {
+                setShowAllocationModal(false);
+            }
         } catch (error) {
             console.error('Error clearing slot:', error);
             alert('Erro ao remover alocação: ' + (error as any).message);
@@ -325,48 +359,40 @@ const DailyMap: React.FC = () => {
 
             <div className="grid grid-cols-3 gap-3 content-start relative z-10">
                 {rooms.map((room) => {
-                    const morning = getAllocation(room.id, 'morning');
-                    const afternoon = getAllocation(room.id, 'afternoon');
-                    const docMorning = morning ? getDoctor(morning.doctor_id) : null;
-                    const docAfternoon = afternoon ? getDoctor(afternoon.doctor_id) : null;
-                    const styleMorning = docMorning ? getDoctorStyle(docMorning.name) : { text: 'text-gray-900' };
-                    const styleAfternoon = docAfternoon ? getDoctorStyle(docAfternoon.name) : { text: 'text-gray-900' };
+                    const morningAllocs = getAllocationsForSlot(room.id, 'morning');
+                    const afternoonAllocs = getAllocationsForSlot(room.id, 'afternoon');
+
+                    const renderPdfSlotDoctors = (allocs: DBAllocation[], shiftLabel: string) => (
+                        <div className="flex-1 px-2.5 py-1.5 flex flex-col justify-center bg-white relative">
+                            <div className="flex justify-between items-center mb-0.5">
+                                <span className="text-[8px] font-bold uppercase tracking-wider text-primary">{shiftLabel}</span>
+                                {allocs.length === 0 && <span className="text-[8px] text-gray-300 italic">Livre</span>}
+                            </div>
+                            {allocs.map((alloc, idx) => {
+                                const doc = getDoctor(alloc.doctor_id);
+                                const style = doc ? getDoctorStyle(doc.name) : { text: 'text-gray-900' };
+                                return doc ? (
+                                    <div key={alloc.id} className={`w-full ${idx > 0 ? 'mt-1 pt-1 border-t border-dashed border-gray-200' : 'mt-0.5'}`}>
+                                        <p className={`font-bold uppercase leading-normal whitespace-nowrap ${printPeriod === 'both' ? 'text-[8px]' : 'text-[10px]'} ${style.text}`}>{doc.name}</p>
+                                        {(alloc.start_time || alloc.end_time) && (
+                                            <p className={`font-bold text-gray-400 leading-normal ${printPeriod === 'both' ? 'text-[7px]' : 'text-[8px]'}`}>{alloc.start_time || '?'} - {alloc.end_time || '?'}</p>
+                                        )}
+                                        <p className={`font-medium text-gray-500 leading-normal ${printPeriod === 'both' ? 'text-[7px]' : 'text-[9px]'}`}>{doc.specialty}</p>
+                                    </div>
+                                ) : null;
+                            })}
+                        </div>
+                    );
 
                     return (
-                        <div key={room.id} className="border rounded-lg overflow-hidden flex flex-col bg-white shadow-sm h-[140px] border-gray-200">
+                        <div key={room.id} className="border rounded-lg overflow-hidden flex flex-col bg-white shadow-sm border-gray-200" style={{ minHeight: '140px' }}>
                             <div className="px-2.5 py-1.5 border-b flex justify-between items-center shrink-0 bg-gray-50 border-gray-200">
                                 <span className="font-bold text-[10px] uppercase text-gray-700 truncate">{room.name}</span>
                                 {room.extension && <span className="text-[9px] font-bold text-gray-400">EXT: {room.extension}</span>}
                             </div>
                             <div className="flex-1 flex flex-col divide-y divide-gray-100">
-                                {(printPeriod === 'morning' || printPeriod === 'both') && (
-                                    <div className="flex-1 px-2.5 py-1.5 flex flex-col justify-center bg-white relative">
-                                        <div className="flex justify-between items-center mb-0.5">
-                                            <span className="text-[8px] font-bold uppercase tracking-wider text-primary">Manhã</span>
-                                            {!docMorning && <span className="text-[8px] text-gray-300 italic">Livre</span>}
-                                        </div>
-                                        {docMorning && (
-                                            <div className="w-full mt-1">
-                                                <p className={`font-bold uppercase leading-normal whitespace-nowrap ${printPeriod === 'both' ? 'text-[9px]' : 'text-[11px]'} ${styleMorning.text}`}>{docMorning.name}</p>
-                                                <p className={`font-medium text-gray-500 leading-normal ${printPeriod === 'both' ? 'text-[8px]' : 'text-[10px]'}`}>{docMorning.specialty}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                                {(printPeriod === 'afternoon' || printPeriod === 'both') && (
-                                    <div className="flex-1 px-2.5 py-2 flex flex-col justify-center relative bg-gray-50/50">
-                                        <div className="flex justify-between items-center mb-0.5">
-                                            <span className="text-[8px] font-bold uppercase tracking-wider text-primary">Tarde</span>
-                                            {!docAfternoon && <span className="text-[8px] text-gray-300 italic">Livre</span>}
-                                        </div>
-                                        {docAfternoon && (
-                                            <div className="w-full mt-1">
-                                                <p className={`font-bold uppercase leading-normal whitespace-nowrap ${printPeriod === 'both' ? 'text-[9px]' : 'text-[11px]'} ${styleAfternoon.text}`}>{docAfternoon.name}</p>
-                                                <p className={`font-medium text-gray-500 leading-normal ${printPeriod === 'both' ? 'text-[8px]' : 'text-[10px]'}`}>{docAfternoon.specialty}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                {(printPeriod === 'morning' || printPeriod === 'both') && renderPdfSlotDoctors(morningAllocs, 'Manhã')}
+                                {(printPeriod === 'afternoon' || printPeriod === 'both') && renderPdfSlotDoctors(afternoonAllocs, 'Tarde')}
                             </div>
                         </div>
                     );
@@ -436,12 +462,36 @@ const DailyMap: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 pb-10">
                         {rooms.length > 0 ? (
                             rooms.map((room) => {
-                                const morning = getAllocation(room.id, 'morning');
-                                const afternoon = getAllocation(room.id, 'afternoon');
-                                const docMorning = morning ? getDoctor(morning.doctor_id) : null;
-                                const docAfternoon = afternoon ? getDoctor(afternoon.doctor_id) : null;
-                                const styleMorning = docMorning ? getDoctorStyle(docMorning.name) : { text: 'text-gray-900' };
-                                const styleAfternoon = docAfternoon ? getDoctorStyle(docAfternoon.name) : { text: 'text-gray-900' };
+                                const morningAllocs = getAllocationsForSlot(room.id, 'morning');
+                                const afternoonAllocs = getAllocationsForSlot(room.id, 'afternoon');
+
+                                const renderShiftSlot = (shift: 'morning' | 'afternoon', allocs: DBAllocation[], label: string) => (
+                                    <div
+                                        onClick={() => canEdit && (setSelectedSlot({ roomId: room.id, shift }), setAllocationStartTime(''), setAllocationEndTime(''), setAllocationFullPeriod(true), setShowAllocationModal(true))}
+                                        className={`p-2 relative flex-1 min-h-[70px] flex flex-col justify-center ${canEdit ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                                    >
+                                        <span className="absolute top-1 right-1 text-[8px] font-bold text-primary-dark uppercase bg-primary-light/50 px-1 rounded">{label}</span>
+                                        {allocs.length > 0 ? (
+                                            <div className="mt-1 space-y-1">
+                                                {allocs.map((alloc, idx) => {
+                                                    const doc = getDoctor(alloc.doctor_id);
+                                                    const style = doc ? getDoctorStyle(doc.name) : { text: 'text-gray-900' };
+                                                    return doc ? (
+                                                        <div key={alloc.id} className={`${idx > 0 ? 'pt-1 border-t border-dashed border-gray-200' : ''}`}>
+                                                            <p className={`font-bold text-xs uppercase truncate ${style.text}`}>{doc.name}</p>
+                                                            {(alloc.start_time || alloc.end_time) && (
+                                                                <p className="text-[9px] font-bold text-gray-400 truncate">{alloc.start_time || '?'} - {alloc.end_time || '?'}</p>
+                                                            )}
+                                                            <p className="text-[10px] text-gray-500 truncate">{doc.specialty}</p>
+                                                        </div>
+                                                    ) : null;
+                                                })}
+                                            </div>
+                                        ) : (
+                                            canEdit && <div className="text-center text-gray-200"><span className="material-symbols-outlined text-lg">add</span></div>
+                                        )}
+                                    </div>
+                                );
 
                                 return (
                                     <div key={room.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col transition-all hover:shadow-md h-full">
@@ -450,24 +500,8 @@ const DailyMap: React.FC = () => {
                                             {room.extension && <span className="text-gray-500 text-[10px] font-bold">RAMAL: {room.extension}</span>}
                                         </div>
                                         <div className="divide-y divide-gray-100 flex-1 flex flex-col">
-                                            <div onClick={() => canEdit && (setSelectedSlot({ roomId: room.id, shift: 'morning' }), setShowAllocationModal(true))} className={`p-2 relative flex-1 min-h-[70px] flex flex-col justify-center ${canEdit ? 'cursor-pointer hover:bg-gray-50' : ''}`}>
-                                                <span className="absolute top-1 right-1 text-[8px] font-bold text-primary-dark uppercase bg-primary-light/50 px-1 rounded">Manhã</span>
-                                                {docMorning ? (
-                                                    <div className="mt-1">
-                                                        <p className={`font-bold text-xs uppercase truncate ${styleMorning.text}`}>{docMorning.name}</p>
-                                                        <p className="text-[10px] text-gray-500 truncate">{docMorning.specialty}</p>
-                                                    </div>
-                                                ) : (canEdit && <div className="text-center text-gray-200"><span className="material-symbols-outlined text-lg">add</span></div>)}
-                                            </div>
-                                            <div onClick={() => canEdit && (setSelectedSlot({ roomId: room.id, shift: 'afternoon' }), setShowAllocationModal(true))} className={`p-2 relative flex-1 min-h-[70px] flex flex-col justify-center ${canEdit ? 'cursor-pointer hover:bg-gray-50' : ''}`}>
-                                                <span className="absolute top-1 right-1 text-[8px] font-bold text-primary-dark uppercase bg-primary-light/50 px-1 rounded">Tarde</span>
-                                                {docAfternoon ? (
-                                                    <div className="mt-1">
-                                                        <p className={`font-bold text-xs uppercase truncate ${styleAfternoon.text}`}>{docAfternoon.name}</p>
-                                                        <p className="text-[10px] text-gray-500 truncate">{docAfternoon.specialty}</p>
-                                                    </div>
-                                                ) : (canEdit && <div className="text-center text-gray-200"><span className="material-symbols-outlined text-lg">add</span></div>)}
-                                            </div>
+                                            {renderShiftSlot('morning', morningAllocs, 'Manhã')}
+                                            {renderShiftSlot('afternoon', afternoonAllocs, 'Tarde')}
                                         </div>
                                     </div>
                                 );
@@ -581,47 +615,142 @@ const DailyMap: React.FC = () => {
 
 
             {/* ALLOCATION MODAL */}
-            {showAllocationModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-                        <div className="p-4 border-b bg-primary text-white">
-                            <h3 className="font-bold">Alocar Médico</h3>
-                            <p className="text-xs opacity-80">{rooms.find(r => r.id === selectedSlot?.roomId)?.name} • {selectedSlot?.shift === 'morning' ? 'Manhã' : 'Tarde'}</p>
-                        </div>
-                        <div className="p-2 max-h-[60vh] overflow-y-auto">
-                            <input type="text" placeholder="Buscar..." value={doctorSearch} onChange={(e) => setDoctorSearch(e.target.value)} className="w-full text-sm p-2 border rounded-lg mb-2" />
-                            {doctors
-                                .filter(d =>
-                                    d.name.toLowerCase().includes(doctorSearch.toLowerCase()) &&
-                                    d.sector === selectedFloor
-                                )
-                                .sort((a, b) => a.name.localeCompare(b.name))
-                                .map(doctor => (
-                                    <button key={doctor.id} onClick={() => handleAssignDoctor(doctor.id)} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg text-left border-l-4 border-primary bg-primary/5 mb-1 transition-all">
-                                        <div className="size-8 rounded-full bg-primary-light flex items-center justify-center font-bold text-[10px] text-primary">
-                                            {doctor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-sm">{doctor.name}</p>
-                                            <p className="text-[10px] text-gray-500">{doctor.specialty}</p>
-                                        </div>
-                                    </button>
-                                ))}
-                            {doctors.filter(d => d.sector === selectedFloor).length === 0 && (
-                                <div className="text-center py-8 text-gray-400 italic text-sm">
-                                    Nenhum profissional cadastrado para o {selectedFloor}.
+            {showAllocationModal && (() => {
+                const currentSlotAllocs = selectedSlot ? getAllocationsForSlot(selectedSlot.roomId, selectedSlot.shift) : [];
+                const canAddMore = currentSlotAllocs.length < 2;
+
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                            <div className="p-4 border-b bg-primary text-white">
+                                <h3 className="font-bold">Alocar Profissional</h3>
+                                <p className="text-xs opacity-80">{rooms.find(r => r.id === selectedSlot?.roomId)?.name} • {selectedSlot?.shift === 'morning' ? 'Manhã' : 'Tarde'}</p>
+                            </div>
+
+                            {/* Current Allocations */}
+                            {currentSlotAllocs.length > 0 && (
+                                <div className="p-3 border-b border-gray-100 bg-gray-50/50">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Profissionais Alocados ({currentSlotAllocs.length}/2)</p>
+                                    {currentSlotAllocs.map((alloc) => {
+                                        const doc = getDoctor(alloc.doctor_id);
+                                        return doc ? (
+                                            <div key={alloc.id} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-gray-100 mb-1.5 shadow-sm">
+                                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                                    <div className="size-8 rounded-full bg-primary-light flex items-center justify-center font-bold text-[10px] text-primary shrink-0">
+                                                        {doc.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-xs truncate text-gray-800">{doc.name}</p>
+                                                        <p className="text-[9px] text-gray-400">
+                                                            {alloc.start_time && alloc.end_time ? `${alloc.start_time} - ${alloc.end_time}` : 'Todo o Período'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleClearSlot(alloc.id)}
+                                                    className="text-gray-300 hover:text-red-500 p-1 hover:bg-red-50 rounded-md transition-colors shrink-0 ml-2"
+                                                    title="Remover"
+                                                >
+                                                    <span className="material-symbols-outlined text-base">close</span>
+                                                </button>
+                                            </div>
+                                        ) : null;
+                                    })}
                                 </div>
                             )}
-                            {selectedSlot && getAllocation(selectedSlot.roomId, selectedSlot.shift) && (
-                                <button onClick={handleClearSlot} className="w-full mt-2 p-2 text-red-500 font-bold text-sm hover:bg-red-50 rounded-lg">Remover Alocação</button>
+
+                            {/* Add new doctor section */}
+                            {canAddMore ? (
+                                <div className="p-3 max-h-[50vh] overflow-y-auto">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                        {currentSlotAllocs.length === 0 ? 'Selecione o Profissional' : 'Adicionar 2º Profissional'}
+                                    </p>
+
+                                    {/* Full Period Toggle + Time Range */}
+                                    <div className="mb-3">
+                                        <label
+                                            className="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg border border-gray-200 hover:border-primary/30 transition-colors mb-2"
+                                            onClick={() => setAllocationFullPeriod(!allocationFullPeriod)}
+                                        >
+                                            <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 shrink-0 ${allocationFullPeriod ? 'bg-primary' : 'bg-gray-300'}`}>
+                                                <div className={`absolute top-0.5 left-0.5 bg-white size-4 rounded-full transition-transform duration-300 shadow-sm ${allocationFullPeriod ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                            </div>
+                                            <div>
+                                                <span className="text-sm font-bold text-gray-700 block leading-none">Todo o Período</span>
+                                                <span className="text-[10px] text-gray-400">
+                                                    {selectedSlot?.shift === 'morning' ? 'Manhã inteira' : 'Tarde inteira'}
+                                                </span>
+                                            </div>
+                                        </label>
+
+                                        {!allocationFullPeriod && (
+                                            <div className="flex gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div className="flex-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Hora Início</label>
+                                                    <input
+                                                        type="time"
+                                                        value={allocationStartTime}
+                                                        onChange={(e) => setAllocationStartTime(e.target.value)}
+                                                        className="w-full text-sm p-2 border border-gray-200 rounded-lg focus:border-primary outline-none"
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Hora Fim</label>
+                                                    <input
+                                                        type="time"
+                                                        value={allocationEndTime}
+                                                        onChange={(e) => setAllocationEndTime(e.target.value)}
+                                                        className="w-full text-sm p-2 border border-gray-200 rounded-lg focus:border-primary outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <input type="text" placeholder="Buscar profissional..." value={doctorSearch} onChange={(e) => setDoctorSearch(e.target.value)} className="w-full text-sm p-2 border border-gray-200 rounded-lg mb-2 focus:border-primary outline-none" />
+                                    {doctors
+                                        .filter(d =>
+                                            d.name.toLowerCase().includes(doctorSearch.toLowerCase()) &&
+                                            d.sector === selectedFloor
+                                        )
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(doctor => (
+                                            <button key={doctor.id} onClick={() => handleAssignDoctor(doctor.id)} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg text-left border-l-4 border-primary bg-primary/5 mb-1 transition-all">
+                                                <div className="size-8 rounded-full bg-primary-light flex items-center justify-center font-bold text-[10px] text-primary">
+                                                    {doctor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-sm">{doctor.name}</p>
+                                                    <p className="text-[10px] text-gray-500">{doctor.specialty}</p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    {doctors.filter(d => d.sector === selectedFloor).length === 0 && (
+                                        <div className="text-center py-8 text-gray-400 italic text-sm">
+                                            Nenhum profissional cadastrado para o {selectedFloor}.
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="p-4 text-center">
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                        <p className="text-amber-700 font-bold text-sm">Limite atingido</p>
+                                        <p className="text-amber-600 text-xs mt-1">Esta sala já possui 2 profissionais neste período. Remova um para adicionar outro.</p>
+                                    </div>
+                                </div>
                             )}
-                        </div>
-                        <div className="p-3 bg-gray-50 text-center">
-                            <button onClick={() => setShowAllocationModal(false)} className="text-gray-500 text-sm font-bold">Cancelar</button>
+
+                            {/* Footer */}
+                            <div className="p-3 bg-gray-50 flex justify-between items-center border-t border-gray-100">
+                                {currentSlotAllocs.length > 0 ? (
+                                    <button onClick={() => handleClearSlot()} className="text-red-500 text-sm font-bold hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors">Remover Todos</button>
+                                ) : <div />}
+                                <button onClick={() => { setShowAllocationModal(false); setDoctorSearch(''); }} className="text-gray-500 text-sm font-bold hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">Fechar</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
         </div>
     );
 };

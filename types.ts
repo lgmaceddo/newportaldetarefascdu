@@ -85,6 +85,9 @@ export interface DBAllocation {
   doctor_id: string;
   date: string;
   shift: 'morning' | 'afternoon';
+  slot_index?: number; // 0 = first professional, 1 = second professional
+  start_time?: string; // e.g. "07:00"
+  end_time?: string;   // e.g. "10:00"
 }
 
 export interface ChatMessage {

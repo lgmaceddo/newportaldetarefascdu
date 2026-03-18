@@ -337,7 +337,7 @@ const Tasks: React.FC = () => {
                                 <div className="flex flex-wrap gap-2 mt-2 text-sm text-gray-500">
                                     {task.taskType === 'message' && (
                                         <span className="flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider shadow-sm">
-                                            <span className="material-symbols-outlined text-[12px]">chat_bubble</span>RECADO: {task.messageType}
+                                            <span className="material-symbols-outlined text-[12px]">chat_bubble</span>RECADO
                                         </span>
                                     )}
                                     {task.taskType === 'task' && (
@@ -429,16 +429,7 @@ const Tasks: React.FC = () => {
                                     <div className={`${formData.isPatientRelated ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4`}>
 
                                         {formData.taskType === 'message' && (
-                                            <div className="bg-white border-2 border-primary/10 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                        <span className="material-symbols-outlined">label_important</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block leading-none mb-1">Tipo de Recado</span>
-                                                        <span className="font-bold text-base text-primary-dark">{formData.messageType}</span>
-                                                    </div>
-                                                </div>
+                                            <div className="bg-white border-2 border-primary/10 p-4 rounded-2xl flex justify-end items-center shadow-sm">
                                                 <button
                                                     onClick={handlePrint}
                                                     className="flex items-center gap-2 bg-primary text-white hover:bg-primary-dark px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-md active:scale-95"
@@ -575,23 +566,6 @@ const Tasks: React.FC = () => {
 
                                         {formData.taskType === 'message' && (
                                             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Categoria do Recado</label>
-                                                    <div className="grid grid-cols-3 gap-3">
-                                                        {['Receita', 'Medicamentos', 'Outros'].map(type => (
-                                                            <button
-                                                                key={type}
-                                                                onClick={() => setFormData({ ...formData, messageType: type as any })}
-                                                                className={`py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all ${formData.messageType === type
-                                                                    ? 'border-primary bg-primary/5 text-primary'
-                                                                    : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200'}`}
-                                                            >
-                                                                {type}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
                                                 <div className="relative">
                                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Destinatário (Profissional)</label>
                                                     <div className="relative">
@@ -819,18 +793,21 @@ const Tasks: React.FC = () => {
 
             {/* --- PRINTABLE RECADO HIDDEN --- */}
             <div style={{ display: 'none' }}>
-                <div ref={printableRef} className="print-recado-container" style={{
-                    width: '15cm',
-                    minHeight: '12cm',
-                    padding: '0.6cm',
-                    backgroundColor: 'white',
-                    color: 'black',
-                    fontFamily: '"Segoe UI", Roboto, Arial, sans-serif',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    border: '2px solid #00665C',
-                    position: 'relative'
-                }}>
+                <div ref={printableRef} style={{ padding: '1.5cm 1cm 1cm 1.5cm', boxSizing: 'border-box' }}>
+                    <div className="print-recado-container" style={{
+                        width: '15cm',
+                        height: 'auto',
+                        minHeight: 'fit-content',
+                        padding: '0.6cm',
+                        backgroundColor: 'white',
+                        color: 'black',
+                        fontFamily: '"Segoe UI", Roboto, Arial, sans-serif',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        border: '2px solid #00665C',
+                        position: 'relative',
+                        boxSizing: 'border-box'
+                    }}>
                     {/* Header: Brand & Meta */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #00665C', paddingBottom: '8px', marginBottom: '10px' }}>
                         <div>
@@ -839,7 +816,7 @@ const Tasks: React.FC = () => {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ backgroundColor: '#00665C', color: 'white', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', display: 'inline-block' }}>
-                                {formData.messageType?.toUpperCase() || 'RECADO'}
+                                RECADO
                             </div>
                         </div>
                     </div>
@@ -899,10 +876,7 @@ const Tasks: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Divider for storage book */}
-                    <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px dashed #ccc', textAlign: 'center' }}>
-                        <div style={{ fontSize: '7px', color: '#bbb', textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 'bold' }}>ANEXAR AO LIVRO OFÍCIO</div>
-                    </div>
+                </div>
                 </div>
             </div>
         </div>
