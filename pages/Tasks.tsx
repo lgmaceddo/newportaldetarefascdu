@@ -614,12 +614,34 @@ const Tasks: React.FC = () => {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    {formData.recipientId && (
-                                                        <div className="absolute right-3 top-[38px] flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-lg pointer-events-none">
-                                                            <span className="material-symbols-outlined text-[12px]">verified</span>
-                                                            VINCULADO
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="relative">
+                                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Responsável</label>
+                                                        <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 cursor-default transition-all shadow-inner">
+                                                            <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                                                                {getFormattedDisplayName()[0]}
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-bold text-gray-700 leading-none">{getFormattedDisplayName()}</span>
+                                                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Autor Logado</span>
+                                                            </div>
                                                         </div>
-                                                    )}
+                                                    </div>
+
+                                                    <div className="relative">
+                                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Setor Ativo</label>
+                                                        <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 cursor-default shadow-inner">
+                                                            <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                                                <span className="material-symbols-outlined text-sm">layers</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-bold text-gray-700 leading-tight uppercase tracking-tighter truncate max-w-[120px]">{selectedFloor || 'Geral'}</span>
+                                                                <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Andar Atificado</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
