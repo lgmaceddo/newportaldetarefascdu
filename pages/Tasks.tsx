@@ -37,7 +37,14 @@ const mockTasks: Task[] = [
 ];
 
 const Tasks: React.FC = () => {
-    const { user, selectedFloor } = useAuth();
+    const { user, selectedFloor, getFormattedDisplayName } = useAuth();
+
+    // Helper to replace [MEU_NOME] placeholder with current display name
+    const replacePlaceholders = (text: string) => {
+        if (!text) return text;
+        const currentName = getFormattedDisplayName();
+        return text.replace(/\[MEU_NOME\]/g, currentName);
+    };
     const [tasks, setTasks] = useState<Task[]>(() => {
         const saved = localStorage.getItem('mediportal_tasks');
         return saved ? JSON.parse(saved) : mockTasks;
@@ -231,13 +238,13 @@ const Tasks: React.FC = () => {
                 date: cleanData.date || new Date().toISOString().split('T')[0],
                 taskType: cleanData.taskType as 'task' | 'message',
                 messageType: cleanData.messageType as 'Receita' | 'Medicamentos' | 'Outros',
-                authorName: user?.name || '',
+                authorName: getFormattedDisplayName(),
                 createdAt: new Date().toISOString(),
                 sector: selectedFloor // Tie to the current active floor
             };
             setTasks(prev => [newTask, ...prev]);
         } else if (modalMode === 'edit' && currentTask) {
-            setTasks(prev => prev.map(t => t.id === currentTask.id ? { ...t, ...cleanData, authorName: t.authorName || (user?.name || '') } as Task : t));
+            setTasks(prev => prev.map(t => t.id === currentTask.id ? { ...t, ...cleanData, authorName: t.authorName || getFormattedDisplayName() } as Task : t));
         }
         closeModal();
     };
@@ -452,7 +459,7 @@ const Tasks: React.FC = () => {
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
                                                         {formData.taskType === 'message' ? 'Assunto' : 'Título da Atividade'}
                                                     </label>
-                                                    <h2 className="text-gray-900 font-bold text-2xl truncate pr-4">{formData.title}</h2>
+                                                    <h2 className="text-gray-900 font-bold text-2xl truncate pr-4">{replacePlaceholders(formData.title)}</h2>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <span className={`px-3 py-1 rounded-lg text-[10px] font-bold border uppercase ${getPriorityColor(formData.priority as Priority)}`}>
@@ -467,7 +474,7 @@ const Tasks: React.FC = () => {
                                                     {formData.taskType === 'message' ? 'Formalização' : 'Descrição'}
                                                 </label>
                                                 <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[120px]">
-                                                    {formData.description || <span className="text-gray-300 italic">Sem conteúdo formalizado.</span>}
+                                                    {formData.description ? replacePlaceholders(formData.description) : <span className="text-gray-300 italic">Sem conteúdo formalizado.</span>}
                                                 </div>
                                             </div>
 
@@ -477,9 +484,9 @@ const Tasks: React.FC = () => {
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Responsável</span>
                                                         <div className="flex items-center gap-1.5 text-xs font-bold text-gray-600">
                                                             <div className="size-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary">
-                                                                {formData.authorName?.[0] || 'S'}
+                                                                {replacePlaceholders(formData.authorName || 'Sistema')?.[0] || 'S'}
                                                             </div>
-                                                            {formData.authorName || 'Sistema'}
+                                                            {replacePlaceholders(formData.authorName || 'Sistema')}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
@@ -825,10 +832,10 @@ const Tasks: React.FC = () => {
                     <div style={{ flex: 1, border: '1.5px solid #eee', borderRadius: '8px', padding: '10px 15px', display: 'flex', flexDirection: 'column', minHeight: '0' }}>
                         <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: '5px', marginBottom: '8px' }}>
                             <div style={{ fontSize: '7px', fontWeight: '800', color: '#999', textTransform: 'uppercase' }}>Assunto do Registro</div>
-                            <div style={{ fontSize: '14px', fontWeight: '800', color: '#000' }}>{formData.title}</div>
+                            <div style={{ fontSize: '14px', fontWeight: '800', color: '#000' }}>{replacePlaceholders(formData.title)}</div>
                         </div>
                         <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#333', whiteSpace: 'pre-wrap', flex: 1 }}>
-                            {formData.description || <span style={{ color: '#aaa', fontStyle: 'italic' }}>Nenhum conteúdo detalhado informado.</span>}
+                            {formData.description ? replacePlaceholders(formData.description) : <span style={{ color: '#aaa', fontStyle: 'italic' }}>Nenhum conteúdo detalhado informado.</span>}
                         </div>
                     </div>
 
@@ -869,7 +876,7 @@ const Tasks: React.FC = () => {
                     <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '10px' }}>
                         <div style={{ border: '1px solid #f0f0f0', borderRadius: '6px', padding: '6px 10px' }}>
                             <div style={{ fontSize: '6px', fontWeight: 'bold', color: '#aaa', textTransform: 'uppercase', marginBottom: '2px' }}>Formalizado por</div>
-                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{formData.authorName || (user?.role === 'reception' ? 'RECEPCIONISTA' : user?.name) || 'SISTEMA UNIFICADO'}</div>
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{replacePlaceholders(formData.authorName || (user?.role === 'reception' ? 'RECEPCIONISTA' : user?.name) || 'SISTEMA UNIFICADO')}</div>
                             <div style={{ fontSize: '7px', color: '#00665C', marginTop: '1px', fontWeight: 'bold' }}>setor: {selectedFloor || 'Não informado'}</div>
                         </div>
                         <div style={{ border: '1px solid #f0f0f0', borderRadius: '6px', padding: '6px 10px', textAlign: 'right' }}>

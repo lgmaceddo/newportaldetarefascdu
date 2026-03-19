@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth, FLOOR_OPTIONS } from '../contexts/AuthContext';
 
 // --- Types ---
@@ -36,14 +36,47 @@ const Navbar: React.FC<NavbarProps> = ({
     onToggleNotifications,
     unreadCount
 }) => {
-    const { user, selectedFloor, setSelectedFloor } = useAuth();
+    const { user, selectedFloor, setSelectedFloor, customDisplayName, setCustomDisplayName, getFormattedDisplayName } = useAuth();
     const [time, setTime] = useState(new Date());
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editNameValue, setEditNameValue] = useState('');
+    const nameInputRef = useRef<HTMLInputElement>(null);
 
     // Clock Effect
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    // Focus input when editing
+    useEffect(() => {
+        if (isEditingName && nameInputRef.current) {
+            nameInputRef.current.focus();
+            nameInputRef.current.select();
+        }
+    }, [isEditingName]);
+
+    const startEditing = () => {
+        setEditNameValue(customDisplayName || user?.name || '');
+        setIsEditingName(true);
+    };
+
+    const saveName = () => {
+        if (editNameValue.trim()) {
+            setCustomDisplayName(editNameValue.trim());
+        }
+        setIsEditingName(false);
+    };
+
+    const cancelEditing = () => {
+        setIsEditingName(false);
+        setEditNameValue('');
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') saveName();
+        if (e.key === 'Escape') cancelEditing();
+    };
 
     // --- Icon Helper ---
     const getIconForType = (type: ContactType) => {
@@ -87,20 +120,43 @@ const Navbar: React.FC<NavbarProps> = ({
                 <div className="flex items-center gap-4">
 
                     {/* User Capsule */}
-                    <div className="bg-white/10 hover:bg-white/20 transition-all cursor-default rounded-lg px-4 py-1.5 flex flex-col justify-center border border-white/10 backdrop-blur-md shadow-sm min-w-[160px]">
-                        <span className="text-white font-bold text-sm leading-tight truncate">
-                            {(() => {
-                                if (!user) return 'Usuário';
-                                if (user.role === 'doctor') {
-                                    const lower = user.name.toLowerCase();
-                                    if (lower.startsWith('dr') || lower.startsWith('dra')) return user.name;
-                                    const firstName = user.name.split(' ')[0].toLowerCase();
-                                    const isFemale = firstName.endsWith('a') || ['alice', 'beatriz', 'raquel', 'isabel', 'liz'].includes(firstName);
-                                    return isFemale ? `Drª ${user.name}` : `Drº ${user.name}`;
-                                }
-                                return user.name;
-                            })()}
-                        </span>
+                    <div className="bg-white/10 hover:bg-white/20 transition-all cursor-default rounded-lg px-4 py-1.5 flex flex-col justify-center border border-white/10 backdrop-blur-md shadow-sm min-w-[200px] h-[48px] group relative">
+                        {isEditingName ? (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    ref={nameInputRef}
+                                    type="text"
+                                    value={editNameValue}
+                                    onChange={(e) => setEditNameValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    onBlur={saveName}
+                                    className="bg-white/20 text-white font-bold text-sm leading-tight px-1 rounded border border-white/30 outline-none w-full"
+                                />
+                                <button onClick={saveName} className="text-green-300 hover:text-green-100 transition-colors">
+                                    <span className="material-symbols-outlined text-sm">check</span>
+                                </button>
+                                <button onClick={cancelEditing} className="text-red-300 hover:text-red-100 transition-colors">
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between gap-2 overflow-hidden">
+                                <span 
+                                    className="text-white font-bold text-sm leading-tight truncate cursor-pointer hover:text-white/80 transition-colors flex-1"
+                                    onClick={startEditing}
+                                    title="Clique para editar seu nome de exibição"
+                                >
+                                    {getFormattedDisplayName()}
+                                </span>
+                                <button 
+                                    onClick={startEditing}
+                                    className="text-white/30 hover:text-white/80 transition-all opacity-0 group-hover:opacity-100"
+                                    title="Editar nome"
+                                >
+                                    <span className="material-symbols-outlined text-xs">edit</span>
+                                </button>
+                            </div>
+                        )}
                         <div className="flex items-center gap-1.5">
                             <span className={`size-2 rounded-full ${user?.status === 'offline' ? 'bg-gray-400' : 'bg-green-400 animate-pulse'}`}></span>
                             <span className="text-white/70 text-[10px] uppercase font-bold tracking-wider leading-tight">

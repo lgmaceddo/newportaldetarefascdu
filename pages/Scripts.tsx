@@ -26,7 +26,7 @@ const INITIAL_SCRIPTS_SEED: any[] = [
 ];
 
 const Scripts: React.FC = () => {
-    const { user } = useAuth();
+    const { user, customDisplayName, getFormattedDisplayName } = useAuth();
 
     // State
     const [categories, setCategories] = useState<ScriptCategory[]>([]);
@@ -216,11 +216,12 @@ const Scripts: React.FC = () => {
         }
     };
 
-    // Helper to extract first two names
+
+
+
+    // Helper to get the display name being used in the Navbar capsule
     const getUserShortName = () => {
-        if (!user || !user.name) return '';
-        const parts = user.name.trim().split(/\s+/);
-        return parts.slice(0, 2).join(' ');
+        return getFormattedDisplayName();
     };
 
     const handleCopy = (text: string) => {

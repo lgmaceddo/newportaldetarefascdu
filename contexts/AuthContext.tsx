@@ -91,6 +91,9 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   logout: () => Promise<void>;
   updateStatus: (status: 'online' | 'offline') => Promise<void>;
+  setCustomDisplayName: (name: string) => void;
+  getFormattedDisplayName: (name?: string) => string;
+  customDisplayName: string;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -101,6 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [customDisplayName, setCustomDisplayNameState] = useState<string>('');
   const [selectedFloor, setSelectedFloorState] = useState<string>(() => {
     return localStorage.getItem('mediportal_selected_floor') || "9º Andar ( OFTALMOLOGIA )";
   });
@@ -141,6 +145,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
         setUser(mappedUser);
+        setCustomDisplayNameState(localStorage.getItem(`mediportal_display_name_${userId}`) || mappedUser.name);
       }
     } catch (err) {
       console.error('Unexpected error fetching profile:', err);
@@ -209,6 +214,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const setCustomDisplayName = (name: string) => {
+    if (user && name.trim()) {
+      localStorage.setItem(`mediportal_display_name_${user.id}`, name.trim());
+      setCustomDisplayNameState(name.trim());
+    }
+  };
+
+  const getFormattedDisplayName = (nameOverride?: string) => {
+    if (!user) return 'Usuário';
+    const baseName = nameOverride || customDisplayName || user.name;
+    if (user.role === 'doctor') {
+      const lower = baseName.toLowerCase();
+      if (lower.startsWith('dr') || lower.startsWith('dra')) return baseName;
+      const firstName = baseName.split(' ')[0].toLowerCase();
+      const isFemale = firstName.endsWith('a') || ['alice', 'beatriz', 'raquel', 'isabel', 'liz'].includes(firstName);
+      return isFemale ? `Drª ${baseName}` : `Drº ${baseName}`;
+    }
+    return baseName;
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -218,6 +243,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       refreshProfile,
       logout,
       updateStatus,
+      setCustomDisplayName,
+      getFormattedDisplayName,
+      customDisplayName,
       isAuthenticated: !!session?.user, // Relies on session being present
       loading
     }}>
