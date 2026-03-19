@@ -821,36 +821,6 @@ const Tasks: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Patient Smart Box */}
-                    {formData.isPatientRelated && (
-                        <div style={{ border: '1.5px solid #eee', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px', backgroundColor: '#fcfcfc' }}>
-                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                <div style={{ flex: 2 }}>
-                                    <div style={{ fontSize: '7px', fontWeight: '800', color: '#00665C', textTransform: 'uppercase', marginBottom: '1px' }}>Paciente / Beneficiário</div>
-                                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#111' }}>{formData.patient}</div>
-                                </div>
-                                {formData.patientCard && (
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#666', textTransform: 'uppercase', marginBottom: '1px' }}>Carteirinha</div>
-                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333', fontFamily: 'monospace' }}>{formData.patientCard}</div>
-                                    </div>
-                                )}
-                                {formData.patientGuide && (
-                                    <div style={{ flex: 0.8 }}>
-                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#666', textTransform: 'uppercase', marginBottom: '1px' }}>Guia</div>
-                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333' }}>{formData.patientGuide}</div>
-                                    </div>
-                                )}
-                                {formData.patientPhone && (
-                                    <div style={{ flex: 1, textAlign: 'right' }}>
-                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#666', textTransform: 'uppercase', marginBottom: '1px' }}>Contato</div>
-                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333' }}>{formData.patientPhone}</div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Content Section */}
                     <div style={{ flex: 1, border: '1.5px solid #eee', borderRadius: '8px', padding: '10px 15px', display: 'flex', flexDirection: 'column', minHeight: '0' }}>
                         <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: '5px', marginBottom: '8px' }}>
@@ -861,6 +831,39 @@ const Tasks: React.FC = () => {
                             {formData.description || <span style={{ color: '#aaa', fontStyle: 'italic' }}>Nenhum conteúdo detalhado informado.</span>}
                         </div>
                     </div>
+
+                    {/* Patient Data - below recado content */}
+                    {formData.isPatientRelated && (
+                        <div style={{ marginTop: '10px', border: '1.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                            <div style={{ padding: '4px 12px' }}>
+                                <span style={{ fontSize: '8px', fontWeight: '900', color: '#333', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dados do Paciente / Beneficiário</span>
+                            </div>
+                            <div style={{ padding: '8px 12px', backgroundColor: '#fafafa', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <div style={{ flex: 2 }}>
+                                    <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Nome</div>
+                                    <div style={{ fontSize: '12px', fontWeight: '800', color: '#111' }}>{formData.patient}</div>
+                                </div>
+                                {formData.patientCard && (
+                                    <div style={{ flex: 1, borderLeft: '1px solid #e8e8e8', paddingLeft: '12px' }}>
+                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Carteirinha</div>
+                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333', fontFamily: 'monospace' }}>{formData.patientCard}</div>
+                                    </div>
+                                )}
+                                {formData.patientGuide && (
+                                    <div style={{ flex: 0.8, borderLeft: '1px solid #e8e8e8', paddingLeft: '12px' }}>
+                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Guia</div>
+                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333' }}>{formData.patientGuide}</div>
+                                    </div>
+                                )}
+                                {formData.patientPhone && (
+                                    <div style={{ flex: 1, borderLeft: '1px solid #e8e8e8', paddingLeft: '12px', textAlign: 'right' }}>
+                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Contato</div>
+                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333' }}>{formData.patientPhone}</div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Footer / Signature Row */}
                     <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '10px' }}>

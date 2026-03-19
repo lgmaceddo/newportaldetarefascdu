@@ -340,49 +340,59 @@ const DailyMap: React.FC = () => {
 
     // --- Render Content ---
     const ReportContent = ({ isPdf = false }: { isPdf?: boolean }) => (
-        <div className="w-full h-full bg-white font-sans flex flex-col p-6 box-border relative text-gray-900">
+        <div style={{
+            width: '210mm',
+            minHeight: '297mm',
+            backgroundColor: 'white',
+            fontFamily: '"Segoe UI", Roboto, Arial, sans-serif',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '12mm 10mm 10mm 10mm',
+            boxSizing: 'border-box',
+            position: 'relative',
+            color: '#111'
+        }}>
             {isPdf && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-                    <span className="material-symbols-outlined text-[400px]">local_hospital</span>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', opacity: 0.03, pointerEvents: 'none' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '400px' }}>local_hospital</span>
                 </div>
             )}
-            <div className={`mb-6 flex justify-between items-center shrink-0 border-b-2 pb-4 ${isPdf ? 'border-primary' : 'border-gray-200'}`}>
-                <div className="flex items-center gap-3">
-                    <div className="bg-primary text-white p-1.5 rounded-lg">
-                        <span className="material-symbols-outlined text-2xl">local_hospital</span>
+
+            {/* Header */}
+            <div style={{ borderBottom: '3px solid #00665C', paddingBottom: '8px', marginBottom: '14px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                    <div style={{ backgroundColor: '#00665C', color: 'white', padding: '5px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>local_hospital</span>
                     </div>
-                    <h1 className="font-bold leading-none tracking-tight text-gray-800 whitespace-nowrap text-xl">
+                    <h1 style={{ fontWeight: 900, fontSize: '18px', color: '#1a1a1a', letterSpacing: '-0.3px', margin: 0 }}>
                         Mapa Diário - {selectedFloor}
                     </h1>
                 </div>
-                <div className="text-right">
-                    <p className="font-bold capitalize leading-none whitespace-nowrap text-primary text-base">
-                        {formatDisplayDate(currentDate)}
-                    </p>
-                </div>
+                <p style={{ fontWeight: 700, fontSize: '13px', color: '#00665C', textTransform: 'capitalize', margin: '0 0 0 42px' }}>
+                    {formatDisplayDate(currentDate)}
+                </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 content-start relative z-10">
+            {/* Grid - 3 columns */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', position: 'relative', zIndex: 10 }}>
                 {rooms.map((room) => {
                     const morningAllocs = getAllocationsForSlot(room.id, 'morning');
                     const afternoonAllocs = getAllocationsForSlot(room.id, 'afternoon');
 
                     const renderPdfSlotDoctors = (allocs: DBAllocation[], shiftLabel: string) => (
-                        <div className="flex-1 px-2.5 py-1.5 flex flex-col justify-center bg-white relative">
-                            <div className="flex justify-between items-center mb-0.5">
-                                <span className="text-[8px] font-bold uppercase tracking-wider text-primary">{shiftLabel}</span>
-                                {allocs.length === 0 && <span className="text-[8px] text-gray-300 italic">Livre</span>}
+                        <div style={{ flex: 1, padding: '5px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                                <span style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#00665C' }}>{shiftLabel}</span>
+                                {allocs.length === 0 && <span style={{ fontSize: '7px', color: '#ccc', fontStyle: 'italic' }}>Livre</span>}
                             </div>
                             {allocs.map((alloc, idx) => {
                                 const doc = getDoctor(alloc.doctor_id);
-                                const style = doc ? getDoctorStyle(doc.name) : { text: 'text-gray-900' };
                                 return doc ? (
-                                    <div key={alloc.id} className={`w-full ${idx > 0 ? 'mt-1 pt-1 border-t border-dashed border-gray-200' : 'mt-0.5'}`}>
-                                        <p className={`font-bold uppercase leading-normal whitespace-nowrap ${printPeriod === 'both' ? 'text-[8px]' : 'text-[10px]'} ${style.text}`}>{doc.name}</p>
-                                        {(alloc.start_time || alloc.end_time) && (
-                                            <p className={`font-bold text-gray-400 leading-normal ${printPeriod === 'both' ? 'text-[7px]' : 'text-[8px]'}`}>{alloc.start_time || '?'} - {alloc.end_time || '?'}</p>
-                                        )}
-                                        <p className={`font-medium text-gray-500 leading-normal ${printPeriod === 'both' ? 'text-[7px]' : 'text-[9px]'}`}>{doc.specialty}</p>
+                                    <div key={alloc.id} style={{ width: '100%', marginTop: idx > 0 ? '3px' : '1px', paddingTop: idx > 0 ? '3px' : '0', borderTop: idx > 0 ? '1px dashed #e0e0e0' : 'none' }}>
+                                        <p style={{ fontWeight: 800, textTransform: 'uppercase', whiteSpace: 'nowrap', fontSize: '8px', color: '#111', margin: 0, lineHeight: 1.3 }}>{doc.name}</p>
+                                        <p style={{ fontWeight: 900, fontSize: '8px', color: '#555', margin: 0, lineHeight: 1.3 }}>
+                                            {alloc.start_time && alloc.end_time ? `${alloc.start_time} - ${alloc.end_time}` : 'Todo o Período'}
+                                        </p>
                                     </div>
                                 ) : null;
                             })}
@@ -390,13 +400,16 @@ const DailyMap: React.FC = () => {
                     );
 
                     return (
-                        <div key={room.id} className="border rounded-lg overflow-hidden flex flex-col bg-white shadow-sm border-gray-200" style={{ minHeight: '140px' }}>
-                            <div className="px-2.5 py-1.5 border-b flex justify-between items-center shrink-0 bg-gray-50 border-gray-200">
-                                <span className="font-bold text-[10px] uppercase text-gray-700 truncate">{room.name}</span>
-                                {room.extension && <span className="text-[9px] font-bold text-gray-400">EXT: {room.extension}</span>}
+                        <div key={room.id} style={{ border: '1.5px solid #ddd', borderRadius: '6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', backgroundColor: 'white', minHeight: '100px' }}>
+                            <div style={{ padding: '4px 8px', borderBottom: '1.5px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, backgroundColor: '#f5f5f5' }}>
+                                <span style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', color: '#333' }}>{room.name}</span>
+                                {room.extension && <span style={{ fontSize: '9px', fontWeight: 900, color: '#444' }}>RAMAL: {room.extension}</span>}
                             </div>
-                            <div className="flex-1 flex flex-col divide-y divide-gray-100">
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                 {(printPeriod === 'morning' || printPeriod === 'both') && renderPdfSlotDoctors(morningAllocs, 'Manhã')}
+                                {(printPeriod === 'morning' || printPeriod === 'both') && (printPeriod === 'afternoon' || printPeriod === 'both') && (
+                                    <div style={{ borderTop: '1px solid #f0f0f0' }} />
+                                )}
                                 {(printPeriod === 'afternoon' || printPeriod === 'both') && renderPdfSlotDoctors(afternoonAllocs, 'Tarde')}
                             </div>
                         </div>
@@ -614,7 +627,7 @@ const DailyMap: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex-1 overflow-auto p-8 flex justify-center bg-gray-500/10">
-                            <div ref={reportRef} className="bg-white shadow-lg mx-auto" style={{ width: '794px', minHeight: '600px' }}>
+                            <div ref={reportRef} className="bg-white shadow-lg mx-auto" style={{ width: '210mm', minHeight: '297mm' }}>
                                 <ReportContent isPdf={true} />
                             </div>
                         </div>
