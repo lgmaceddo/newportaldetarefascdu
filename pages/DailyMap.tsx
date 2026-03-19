@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
+import { useReactToPrint } from 'react-to-print';
 
 const DailyMap: React.FC = () => {
     const { user, selectedFloor } = useAuth();
@@ -200,14 +201,12 @@ const DailyMap: React.FC = () => {
                     useCORS: true,
                     logging: false,
                     backgroundColor: '#ffffff',
-                    width: 794,
-                    height: 1123,
-                    windowWidth: 794,
-                    windowHeight: 1123,
                 });
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+                const pdfWidth = 210;
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save(`mapa_${selectedFloor}_${formatDateKey(currentDate)}.pdf`);
             } catch (error) {
                 console.error(error);
@@ -217,6 +216,12 @@ const DailyMap: React.FC = () => {
             }
         }, 100);
     };
+
+    // --- Print Handler ---
+    const handlePrintMap = useReactToPrint({
+        contentRef: reportRef,
+        documentTitle: `Mapa_${selectedFloor}_${formatDateKey(currentDate)}`,
+    });
 
     // --- Handlers ---
     const [roomForm, setRoomForm] = useState({ name: '', extension: '' });
@@ -598,14 +603,18 @@ const DailyMap: React.FC = () => {
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => setShowReportModal(false)} className="px-4 py-2 text-gray-500 font-bold text-sm hover:bg-gray-100 rounded-lg">Fechar</button>
-                                <button onClick={handleDownloadPDF} disabled={isGeneratingPdf} className="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                                <button onClick={() => handlePrintMap()} className="bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-gray-800 transition-colors">
+                                    <span className="material-symbols-outlined">print</span>
+                                    Imprimir
+                                </button>
+                                <button onClick={handleDownloadPDF} disabled={isGeneratingPdf} className="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-primary-dark transition-colors">
                                     {isGeneratingPdf ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">download</span>}
                                     {isGeneratingPdf ? 'Gerando...' : 'Baixar PDF'}
                                 </button>
                             </div>
                         </div>
                         <div className="flex-1 overflow-auto p-8 flex justify-center bg-gray-500/10">
-                            <div ref={reportRef} className="bg-white shadow-lg mx-auto" style={{ width: '794px', height: '1123px', minWidth: '794px', minHeight: '1123px' }}>
+                            <div ref={reportRef} className="bg-white shadow-lg mx-auto" style={{ width: '794px', minHeight: '600px' }}>
                                 <ReportContent isPdf={true} />
                             </div>
                         </div>
