@@ -944,20 +944,28 @@ const Tasks: React.FC = () => {
                             <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Dados do Paciente / Beneficiário</div>
                             {formData.isPatientRelated ? (
                                 <>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Nome</div>
-                                        <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{formData.patient || '-'}</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '5px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Nome</div>
+                                            <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{formData.patient || '-'}</div>
+                                        </div>
+                                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Contato</div>
+                                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{formData.patientPhone || '-'}</div>
+                                        </div>
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
                                         <div>
-                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha / Guia</div>
+                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha</div>
                                             <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
-                                                {formData.patientCard || '-'} {formData.patientGuide ? ` | G: ${formData.patientGuide}` : ''}
+                                                {formData.patientCard || '-'}
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Contato</div>
-                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{formData.patientPhone || '-'}</div>
+                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Guia</div>
+                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
+                                                {formData.patientGuide || '-'}
+                                            </div>
                                         </div>
                                     </div>
                                 </>
@@ -1040,20 +1048,28 @@ const Tasks: React.FC = () => {
                                             <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Dados do Paciente / Beneficiário</div>
                                             {batchTask.isPatientRelated ? (
                                                 <>
-                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Nome</div>
-                                                        <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{batchTask.patient || '-'}</div>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '5px' }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Nome</div>
+                                                            <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{batchTask.patient || '-'}</div>
+                                                        </div>
+                                                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Contato</div>
+                                                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{batchTask.patientPhone || '-'}</div>
+                                                        </div>
                                                     </div>
                                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
                                                         <div>
-                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha / Guia</div>
+                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha</div>
                                                             <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
-                                                                {batchTask.patientCard || '-'} {batchTask.patientGuide ? ` | G: ${batchTask.patientGuide}` : ''}
+                                                                {batchTask.patientCard || '-'}
                                                             </div>
                                                         </div>
                                                         <div style={{ textAlign: 'right' }}>
-                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Contato</div>
-                                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{batchTask.patientPhone || '-'}</div>
+                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Guia</div>
+                                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
+                                                                {batchTask.patientGuide || '-'}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </>
