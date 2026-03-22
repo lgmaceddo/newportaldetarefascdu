@@ -17,6 +17,8 @@
     min-height: 100vh;
     background-color: #f1f5f9;
     transition: background-color 0.2s ease, color 0.2s ease;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
   }
 }
 
@@ -76,9 +78,9 @@
 
 .dark .bg-gray-50,
 .dark .bg-gray-100,
-.dark .bg-[#f0f2f5],
-.dark .bg-[#f8fafc],
-.dark .bg-[#f1f5f9] {
+.dark .bg-\[\#f0f2f5\],
+.dark .bg-\[\#f8fafc\],
+.dark .bg-\[\#f1f5f9\] {
   background-color: #0f172a !important;
   color: #e2e8f0;
   border-color: #1e293b !important;

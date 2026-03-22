@@ -203,8 +203,8 @@ const DailyMap: React.FC = () => {
                     backgroundColor: '#ffffff',
                 });
                 const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = 210;
+                const pdf = new jsPDF('p', 'mm', [200, 200]);
+                const pdfWidth = 200;
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save(`mapa_${selectedFloor}_${formatDateKey(currentDate)}.pdf`);
@@ -341,8 +341,8 @@ const DailyMap: React.FC = () => {
     // --- Render Content ---
     const ReportContent = ({ isPdf = false }: { isPdf?: boolean }) => (
         <div style={{
-            width: '210mm',
-            minHeight: '297mm',
+            width: '200mm',
+            minHeight: '200mm',
             backgroundColor: 'white',
             fontFamily: '"Segoe UI", Roboto, Arial, sans-serif',
             display: 'flex',
@@ -388,8 +388,8 @@ const DailyMap: React.FC = () => {
                             {allocs.map((alloc, idx) => {
                                 const doc = getDoctor(alloc.doctor_id);
                                 return doc ? (
-                                    <div key={alloc.id} style={{ width: '100%', marginTop: idx > 0 ? '3px' : '1px', paddingTop: idx > 0 ? '3px' : '0', borderTop: idx > 0 ? '1px dashed #e0e0e0' : 'none' }}>
-                                        <p style={{ fontWeight: 800, textTransform: 'uppercase', whiteSpace: 'nowrap', fontSize: '8px', color: '#111', margin: 0, lineHeight: 1.3 }}>{doc.name}</p>
+                                    <div key={alloc.id} style={{ width: '100%', marginTop: idx > 0 ? '3px' : '1px', paddingTop: idx > 0 ? '3px' : '0', borderTop: idx > 0 ? '1.5px dashed #666' : 'none' }}>
+                                        <p style={{ fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap', fontSize: '11px', color: '#111', margin: 0, lineHeight: 1.2 }}>{doc.name}</p>
                                         <p style={{ fontWeight: 900, fontSize: '8px', color: '#555', margin: 0, lineHeight: 1.3 }}>
                                             {alloc.start_time && alloc.end_time ? `${alloc.start_time} - ${alloc.end_time}` : 'Todo o Período'}
                                         </p>
@@ -400,15 +400,20 @@ const DailyMap: React.FC = () => {
                     );
 
                     return (
-                        <div key={room.id} style={{ border: '1.5px solid #ddd', borderRadius: '6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', backgroundColor: 'white', minHeight: '100px' }}>
-                            <div style={{ padding: '4px 8px', borderBottom: '1.5px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, backgroundColor: '#f5f5f5' }}>
-                                <span style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', color: '#333' }}>{room.name}</span>
-                                {room.extension && <span style={{ fontSize: '9px', fontWeight: 900, color: '#444' }}>RAMAL: {room.extension}</span>}
+                        <div key={room.id} style={{ border: '2px solid #222', borderRadius: '6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', backgroundColor: 'white', minHeight: '100px' }}>
+                            <div style={{ padding: '4px 8px', borderBottom: '2px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, backgroundColor: '#f5f5f5' }}>
+                                <span style={{ fontWeight: 900, fontSize: '13px', textTransform: 'uppercase', color: '#00665C' }}>{room.name}</span>
+                                {room.extension && (
+                                    <span style={{ fontWeight: 900, fontSize: '13px', color: '#111', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>call</span>
+                                        {room.extension}
+                                    </span>
+                                )}
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                 {(printPeriod === 'morning' || printPeriod === 'both') && renderPdfSlotDoctors(morningAllocs, 'Manhã')}
                                 {(printPeriod === 'morning' || printPeriod === 'both') && (printPeriod === 'afternoon' || printPeriod === 'both') && (
-                                    <div style={{ borderTop: '1px solid #f0f0f0' }} />
+                                    <div style={{ borderTop: '2px solid #444' }} />
                                 )}
                                 {(printPeriod === 'afternoon' || printPeriod === 'both') && renderPdfSlotDoctors(afternoonAllocs, 'Tarde')}
                             </div>
@@ -496,7 +501,7 @@ const DailyMap: React.FC = () => {
                                                     const style = doc ? getDoctorStyle(doc.name) : { text: 'text-gray-900' };
                                                     return doc ? (
                                                         <div key={alloc.id} className={`${idx > 0 ? 'pt-1 border-t border-dashed border-gray-200' : ''}`}>
-                                                            <p className={`font-bold text-xs uppercase truncate ${style.text}`}>{doc.name}</p>
+                                                            <p className={`font-black text-[15px] leading-tight uppercase truncate ${style.text}`}>{doc.name}</p>
                                                             {(alloc.start_time || alloc.end_time) && (
                                                                 <p className="text-[9px] font-bold text-gray-400 truncate">{alloc.start_time || '?'} - {alloc.end_time || '?'}</p>
                                                             )}
@@ -513,9 +518,14 @@ const DailyMap: React.FC = () => {
 
                                 return (
                                     <div key={room.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col transition-all hover:shadow-md h-full">
-                                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center h-10">
-                                            <span className="font-bold text-gray-800 text-xs truncate">{room.name}</span>
-                                            {room.extension && <span className="text-gray-500 text-[10px] font-bold">RAMAL: {room.extension}</span>}
+                                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center h-12">
+                                            <span className="font-black text-gray-900 text-base uppercase truncate">{room.name}</span>
+                                            {room.extension && (
+                                                <span className="font-black text-gray-900 text-base flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-base">call</span>
+                                                    {room.extension}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="divide-y divide-gray-100 flex-1 flex flex-col">
                                             {renderShiftSlot('morning', morningAllocs, 'Manhã')}
@@ -627,7 +637,7 @@ const DailyMap: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex-1 overflow-auto p-8 flex justify-center bg-gray-500/10">
-                            <div ref={reportRef} className="bg-white shadow-lg mx-auto" style={{ width: '210mm', minHeight: '297mm' }}>
+                            <div ref={reportRef} className="bg-white shadow-lg mx-auto" style={{ width: '200mm', minHeight: '200mm' }}>
                                 <ReportContent isPdf={true} />
                             </div>
                         </div>

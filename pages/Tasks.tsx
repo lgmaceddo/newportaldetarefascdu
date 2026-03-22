@@ -50,11 +50,26 @@ const Tasks: React.FC = () => {
         return saved ? JSON.parse(saved) : mockTasks;
     });
 
+    const [selectedForBatch, setSelectedForBatch] = useState<string[]>([]);
+
     const printableRef = useRef<HTMLDivElement>(null);
     const handlePrint = useReactToPrint({
         contentRef: printableRef,
         documentTitle: 'Recado_Unimed',
     });
+
+    const batchPrintableRef = useRef<HTMLDivElement>(null);
+    const handleBatchPrint = useReactToPrint({
+        contentRef: batchPrintableRef,
+        documentTitle: 'Recados_Lote_Unimed',
+    });
+
+    const toggleBatchSelect = (taskId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedForBatch(prev => 
+            prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+        );
+    };
 
     useEffect(() => {
         localStorage.setItem('mediportal_tasks', JSON.stringify(tasks));
@@ -289,24 +304,48 @@ const Tasks: React.FC = () => {
                 </button>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-2">
-                {['Active', TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.DONE].map((status) => {
-                    let label = status;
-                    if (status === 'Active') label = 'Em Aberto';
+            <div className="flex gap-2 overflow-x-auto pb-2 justify-between items-center w-full">
+                <div className="flex gap-2">
+                    {['Active', TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.DONE].map((status) => {
+                        let label = status;
+                        if (status === 'Active') label = 'Em Aberto';
 
-                    return (
+                        return (
+                            <button
+                                key={status}
+                                onClick={() => setFilter(status as any)}
+                                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filter === status
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                    }`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
+                {selectedForBatch.length > 0 && (
+                    <div className="flex items-center gap-3 bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 animate-in slide-in-from-right-2">
+                        <span className="text-sm font-bold text-primary shrink-0">{selectedForBatch.length} {selectedForBatch.length === 1 ? 'selecionado' : 'selecionados'}</span>
+                        <div className="w-[1px] h-4 bg-primary/30 shrink-0"></div>
                         <button
-                            key={status}
-                            onClick={() => setFilter(status as any)}
-                            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filter === status
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                                }`}
+                            onClick={() => {
+                                handleBatchPrint();
+                            }}
+                            className="text-primary hover:text-primary-dark font-bold text-sm flex items-center gap-1 transition-colors shrink-0"
                         >
-                            {label}
+                            <span className="material-symbols-outlined text-[18px]">print</span>
+                            Imprimir Lote
                         </button>
-                    );
-                })}
+                        <button
+                            onClick={() => setSelectedForBatch([])}
+                            className="text-gray-400 hover:text-red-500 font-bold text-[10px] ml-1 uppercase transition-colors shrink-0 flex items-center"
+                            title="Limpar seleção"
+                        >
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 gap-4">
@@ -316,8 +355,21 @@ const Tasks: React.FC = () => {
                         onClick={() => handleOpenModal('view', task)}
                         className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 group"
                     >
-                        <div className="flex items-start gap-4 flex-1 w-full">
-                            <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-start gap-4 flex-1 w-full relative">
+                            {/* Checkbox for batch select */}
+                            {task.taskType === 'message' && (
+                                <div 
+                                    className="pt-2.5 pr-1 cursor-pointer transition-transform hover:scale-110 shrink-0"
+                                    onClick={(e) => toggleBatchSelect(task.id, e)}
+                                    title="Selecionar para impressão em lote"
+                                >
+                                    <span className={`material-symbols-outlined text-2xl transition-colors ${selectedForBatch.includes(task.id) ? 'text-primary' : 'text-gray-300 hover:text-gray-400'}`}>
+                                        {selectedForBatch.includes(task.id) ? 'check_box' : 'check_box_outline_blank'}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className={`relative shrink-0 ${task.taskType !== 'message' ? 'ml-0' : ''}`} onClick={(e) => e.stopPropagation()}>
                                 <div
                                     className={`p-3 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${getStatusStyles(task.status)}`}
                                     title="Clique para alterar o status"
@@ -589,8 +641,31 @@ const Tasks: React.FC = () => {
                                                             onFocus={() => setShowProfessionalResults(true)}
                                                             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition-all"
                                                         />
-                                                        {showProfessionalResults && (doctors.filter(d => d.name.toLowerCase().includes((formData.recipientName || searchProfessional).toLowerCase())).length > 0) && (
-                                                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden no-scrollbar border-primary/20 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                        {showProfessionalResults && ((formData.recipientName || searchProfessional).length > 0 || doctors.length > 0) && (
+                                                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-x-hidden no-scrollbar border-primary/20 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                                {/* Custom Name Button */}
+                                                                {(formData.recipientName || searchProfessional) && !doctors.some(d => d.name.toLowerCase() === (formData.recipientName || searchProfessional).toLowerCase()) && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setShowProfessionalResults(false);
+                                                                            setFormData({ ...formData, recipientId: '', recipientName: formData.recipientName || searchProfessional });
+                                                                        }}
+                                                                        className="w-full px-4 py-3 text-left hover:bg-primary/5 flex items-center gap-3 group transition-colors border-b border-gray-100 bg-gray-50"
+                                                                    >
+                                                                        <div className="p-2 bg-gray-200 rounded-lg text-gray-500 group-hover:bg-primary group-hover:text-white transition-colors">
+                                                                            <span className="material-symbols-outlined text-sm">person_add</span>
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="text-sm font-bold text-gray-800 truncate">
+                                                                                Usar destinatário avulso: <span className="text-primary group-hover:text-primary-dark">{formData.recipientName || searchProfessional}</span>
+                                                                            </div>
+                                                                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Registrar sem vínculo no sistema</div>
+                                                                        </div>
+                                                                    </button>
+                                                                )}
+
+                                                                {/* Doctors List */}
                                                                 {doctors
                                                                     .filter(d => d.name.toLowerCase().includes((formData.recipientName || searchProfessional).toLowerCase()))
                                                                     .map(doc => (
@@ -851,9 +926,9 @@ const Tasks: React.FC = () => {
                     </div>
 
                     {/* Content Section */}
-                    <div style={{ flex: 1, border: '1.5px solid #eee', borderRadius: '8px', padding: '10px 15px', display: 'flex', flexDirection: 'column', minHeight: '0' }}>
-                        <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: '5px', marginBottom: '8px' }}>
-                            <div style={{ fontSize: '7px', fontWeight: '800', color: '#999', textTransform: 'uppercase' }}>Assunto do Registro</div>
+                    <div style={{ flex: 1, border: '2px solid #555', borderRadius: '8px', padding: '10px 15px', display: 'flex', flexDirection: 'column', minHeight: '0' }}>
+                        <div style={{ borderBottom: '2px solid #555', paddingBottom: '5px', marginBottom: '8px' }}>
+                            <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase' }}>Assunto do Registro</div>
                             <div style={{ fontSize: '14px', fontWeight: '800', color: '#000' }}>{replacePlaceholders(formData.title)}</div>
                         </div>
                         <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#333', whiteSpace: 'pre-wrap', flex: 1 }}>
@@ -861,54 +936,151 @@ const Tasks: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Patient Data - below recado content */}
-                    {formData.isPatientRelated && (
-                        <div style={{ marginTop: '10px', border: '1.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
-                            <div style={{ padding: '4px 12px' }}>
-                                <span style={{ fontSize: '8px', fontWeight: '900', color: '#333', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dados do Paciente / Beneficiário</span>
-                            </div>
-                            <div style={{ padding: '8px 12px', backgroundColor: '#fafafa', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                <div style={{ flex: 2 }}>
-                                    <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Nome</div>
-                                    <div style={{ fontSize: '12px', fontWeight: '800', color: '#111' }}>{formData.patient}</div>
+                    {/* Compact Footer: Patient on Left, Author & Time on Right */}
+                    <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        
+                        {/* LEFT COLUMN: PACIENTE */}
+                        <div style={{ border: '2px solid #555', borderRadius: '6px', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Dados do Paciente / Beneficiário</div>
+                            {formData.isPatientRelated ? (
+                                <>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Nome</div>
+                                        <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{formData.patient || '-'}</div>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
+                                        <div>
+                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha / Guia</div>
+                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
+                                                {formData.patientCard || '-'} {formData.patientGuide ? ` | G: ${formData.patientGuide}` : ''}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Contato</div>
+                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{formData.patientPhone || '-'}</div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#999', fontStyle: 'italic' }}>Registro sem vínculo de paciente.</span>
                                 </div>
-                                {formData.patientCard && (
-                                    <div style={{ flex: 1, borderLeft: '1px solid #e8e8e8', paddingLeft: '12px' }}>
-                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Carteirinha</div>
-                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333', fontFamily: 'monospace' }}>{formData.patientCard}</div>
-                                    </div>
-                                )}
-                                {formData.patientGuide && (
-                                    <div style={{ flex: 0.8, borderLeft: '1px solid #e8e8e8', paddingLeft: '12px' }}>
-                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Guia</div>
-                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333' }}>{formData.patientGuide}</div>
-                                    </div>
-                                )}
-                                {formData.patientPhone && (
-                                    <div style={{ flex: 1, borderLeft: '1px solid #e8e8e8', paddingLeft: '12px', textAlign: 'right' }}>
-                                        <div style={{ fontSize: '7px', fontWeight: '800', color: '#888', textTransform: 'uppercase', marginBottom: '1px' }}>Contato</div>
-                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#333' }}>{formData.patientPhone}</div>
-                                    </div>
-                                )}
+                            )}
+                        </div>
+
+                        {/* RIGHT COLUMN: AUTOR & DATA */}
+                        <div style={{ border: '2px solid #555', borderRadius: '6px', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'right' }}>
+                            <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Registro e Formalização</div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Emitido Por</div>
+                                <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{replacePlaceholders(formData.authorName || (user?.role === 'reception' ? 'RECEPCIONISTA' : user?.name) || 'SISTEMA UNIFICADO')}</div>
+                                <div style={{ fontSize: '8px', color: '#00665C', fontWeight: 'bold', marginTop: '1px' }}>Unidade: {selectedFloor || 'Não info.'}</div>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', paddingTop: '4px' }}>
+                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Data e Horário do Sistema</div>
+                                <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{new Date().toLocaleString('pt-BR')} • Bauru - SP</div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Footer / Signature Row */}
-                    <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '10px' }}>
-                        <div style={{ border: '1px solid #f0f0f0', borderRadius: '6px', padding: '6px 10px' }}>
-                            <div style={{ fontSize: '6px', fontWeight: 'bold', color: '#aaa', textTransform: 'uppercase', marginBottom: '2px' }}>Formalizado por</div>
-                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{replacePlaceholders(formData.authorName || (user?.role === 'reception' ? 'RECEPCIONISTA' : user?.name) || 'SISTEMA UNIFICADO')}</div>
-                            <div style={{ fontSize: '7px', color: '#00665C', marginTop: '1px', fontWeight: 'bold' }}>setor: {selectedFloor || 'Não informado'}</div>
-                        </div>
-                        <div style={{ border: '1px solid #f0f0f0', borderRadius: '6px', padding: '6px 10px', textAlign: 'right' }}>
-                            <div style={{ fontSize: '7px', fontWeight: 'bold', color: '#aaa', textTransform: 'uppercase', marginBottom: '2px' }}>Data e Horário</div>
-                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{new Date().toLocaleString('pt-BR')}</div>
-                            <div style={{ fontSize: '7px', color: '#666', marginTop: '1px' }}>Bauru - SP</div>
-                        </div>
                     </div>
 
                 </div>
+                </div>
+            </div>
+
+            {/* --- BATCH PRINTABLE RECADOS HIDDEN --- */}
+            <div style={{ display: 'none' }}>
+                <div ref={batchPrintableRef} style={{ padding: '0', boxSizing: 'border-box', backgroundColor: 'white', width: '210mm' }}>
+                    {selectedForBatch.map((taskId, index) => {
+                        const batchTask = tasks.find(t => t.id === taskId);
+                        if (!batchTask || batchTask.taskType !== 'message') return null;
+
+                        return (
+                            <div key={taskId} style={{ padding: '0.6cm 1.5cm', width: '210mm', minHeight: '99mm', height: 'auto', boxSizing: 'border-box', pageBreakInside: 'avoid', borderBottom: '1px dashed #ccc' }}>
+                                <div className="print-recado-container" style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                    backgroundColor: 'white',
+                                    color: 'black',
+                                    fontFamily: '"Segoe UI", Roboto, Arial, sans-serif',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    border: '2px solid #00665C',
+                                    position: 'relative',
+                                    boxSizing: 'border-box',
+                                    padding: '0.4cm'
+                                }}>
+                                    {/* Header: Brand & Meta */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #00665C', paddingBottom: '4px', marginBottom: '6px' }}>
+                                        <div>
+                                            <div style={{ fontSize: '7px', fontWeight: '800', color: '#666', textTransform: 'uppercase', marginBottom: '1px' }}>Para: Profissional / Destinatário</div>
+                                            <div style={{ color: '#00665C', fontSize: '16px', fontWeight: '900', letterSpacing: '-0.5px', lineHeight: '1.2' }}>{batchTask.recipientName || 'CORPO CLÍNICO CDU'}</div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ backgroundColor: '#00665C', color: 'white', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', display: 'inline-block' }}>
+                                                RECADO
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Content Section */}
+                                    <div style={{ flex: 1, border: '2px solid #555', borderRadius: '8px', padding: '6px 12px', display: 'flex', flexDirection: 'column', minHeight: '0' }}>
+                                        <div style={{ borderBottom: '2px solid #555', paddingBottom: '3px', marginBottom: '4px' }}>
+                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#444', textTransform: 'uppercase' }}>Assunto do Registro</div>
+                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#000' }}>{replacePlaceholders(batchTask.title)}</div>
+                                        </div>
+                                        <div style={{ fontSize: '10px', lineHeight: '1.3', color: '#333', whiteSpace: 'pre-wrap', flex: 1, paddingBottom: '4px' }}>
+                                            {batchTask.description ? replacePlaceholders(batchTask.description) : <span style={{ color: '#aaa', fontStyle: 'italic' }}>Nenhum conteúdo detalhado informado.</span>}
+                                        </div>
+                                    </div>
+
+                                    {/* Compact Footer */}
+                                    <div style={{ marginTop: '6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                        <div style={{ border: '2px solid #555', borderRadius: '6px', padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Dados do Paciente / Beneficiário</div>
+                                            {batchTask.isPatientRelated ? (
+                                                <>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Nome</div>
+                                                        <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{batchTask.patient || '-'}</div>
+                                                    </div>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
+                                                        <div>
+                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha / Guia</div>
+                                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
+                                                                {batchTask.patientCard || '-'} {batchTask.patientGuide ? ` | G: ${batchTask.patientGuide}` : ''}
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ textAlign: 'right' }}>
+                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Contato</div>
+                                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{batchTask.patientPhone || '-'}</div>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#999', fontStyle: 'italic' }}>Registro sem vínculo de paciente.</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div style={{ border: '2px solid #555', borderRadius: '6px', padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'right' }}>
+                                            <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Registro e Formalização</div>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Emitido Por</div>
+                                                <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{replacePlaceholders(batchTask.authorName || 'SISTEMA UNIFICADO')}</div>
+                                                <div style={{ fontSize: '8px', color: '#00665C', fontWeight: 'bold', marginTop: '1px' }}>Unidade: {selectedFloor || 'Não info.'}</div>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', paddingTop: '4px' }}>
+                                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Data do Registro Local</div>
+                                                <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{batchTask.date || new Date().toLocaleString('pt-BR')} • Bauru - SP</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
