@@ -500,7 +500,12 @@ const DailyMap: React.FC = () => {
                     {/* Grid Screen */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 pb-10">
                         {rooms.length > 0 ? (
-                            rooms.map((room) => {
+                            [...rooms].sort((a, b) => {
+                                const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+                                const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+                                if (numA !== numB) return numA - numB;
+                                return a.name.localeCompare(b.name);
+                            }).map((room) => {
                                 const morningAllocs = getAllocationsForSlot(room.id, 'morning');
                                 const afternoonAllocs = getAllocationsForSlot(room.id, 'afternoon');
 
@@ -565,60 +570,114 @@ const DailyMap: React.FC = () => {
                     </div>
                 </>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col max-w-4xl mx-auto w-full p-6 animate-in fade-in slide-in-from-top-2">
-                    <div className="flex gap-4 mb-8 items-end bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner">
-                        <div className="flex-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nome da Sala</label>
-                            <input
-                                type="text"
-                                placeholder="Ex: Sala 01, Consultório..."
-                                value={roomForm.name}
-                                onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
-                                className="w-full border border-gray-300 p-3 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                            />
-                        </div>
-                        <div className="w-32">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Ramal</label>
-                            <input
-                                type="text"
-                                placeholder="Ex: 201"
-                                value={roomForm.extension}
-                                onChange={(e) => setRoomForm({ ...roomForm, extension: e.target.value })}
-                                className="w-full border border-gray-300 p-3 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                            />
-                        </div>
-                        <button
-                            onClick={handleSaveRoom}
-                            disabled={!roomForm.name.trim()}
-                            className="bg-primary text-white h-[46px] px-6 rounded-lg font-bold flex items-center gap-2 hover:bg-primary-dark transition-colors disabled:bg-gray-300 shadow-lg shadow-primary/20"
-                        >
-                            <span className="material-symbols-outlined">{editingRoomId ? 'save' : 'add'}</span>
-                            {editingRoomId ? 'Salvar' : 'Criar Sala'}
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {rooms.map(room => (
-                            <div key={room.id} className="flex justify-between items-center p-4 rounded-xl border border-gray-100 bg-white hover:border-primary/30 transition-all group shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                                        <span className="material-symbols-outlined text-xl">meeting_room</span>
+                <div className="flex flex-col gap-8 max-w-[1400px] mx-auto w-full p-4 lg:p-10 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 pointer-events-none" />
+                        
+                        <div className="relative z-10 flex flex-col md:flex-row gap-6 items-end">
+                            <div className="flex-1 w-full translate-y-[2px]">
+                                <label className="text-[10px] font-black text-gray-400 uppercase mb-3 block tracking-widest ml-1">Configurar Nova Sala</label>
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-[2] relative group">
+                                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">meeting_room</span>
+                                         <input
+                                            type="text"
+                                            placeholder="Ex: Sala 01, Consultório B..."
+                                            value={roomForm.name}
+                                            onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
+                                            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none transition-all font-bold text-gray-800 shadow-sm"
+                                        />
                                     </div>
-                                    <div>
-                                        <span className="font-bold text-gray-800 block text-base">{room.name}</span>
-                                        <span className="text-xs text-gray-500 font-bold bg-gray-50 px-2 py-0.5 rounded border border-gray-100">Ramal: {room.extension || '-'}</span>
+                                    <div className="flex-1 relative group">
+                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">call</span>
+                                        <input
+                                            type="text"
+                                            placeholder="Ramal"
+                                            value={roomForm.extension}
+                                            onChange={(e) => setRoomForm({ ...roomForm, extension: e.target.value })}
+                                            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none transition-all font-bold text-gray-800 shadow-sm"
+                                        />
                                     </div>
-                                </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => (setRoomForm({ name: room.name, extension: room.extension || '' }), setEditingRoomId(room.id))} className="text-gray-400 hover:text-blue-500 p-2 hover:bg-blue-50 rounded-lg transition-colors"><span className="material-symbols-outlined">edit</span></button>
-                                    <button onClick={() => handleDeleteRoom(room.id)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors"><span className="material-symbols-outlined">delete</span></button>
+                                    <button
+                                        onClick={handleSaveRoom}
+                                        disabled={!roomForm.name.trim()}
+                                        className="bg-primary text-white py-4 px-8 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-primary-dark transition-all disabled:bg-gray-200 shadow-lg shadow-primary/20 active:scale-95 shrink-0"
+                                    >
+                                        <span className="material-symbols-outlined">{editingRoomId ? 'save' : 'add_circle'}</span>
+                                        {editingRoomId ? 'Salvar' : 'Criar Sala'}
+                                    </button>
+                                    {editingRoomId && (
+                                        <button
+                                            onClick={() => { setEditingRoomId(null); setRoomForm({ name: '', extension: '' }); }}
+                                            className="bg-gray-50 text-gray-400 p-4 rounded-2xl hover:bg-gray-100 transition-all border border-gray-100"
+                                            title="Cancelar Edição"
+                                        >
+                                            <span className="material-symbols-outlined">close</span>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-                        ))}
+                        </div>
                     </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between px-2">
+                             <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Salas Ativas no {selectedFloor}</h4>
+                             <span className="text-[10px] font-bold text-gray-300 italic">{rooms.length} de 20 slots</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                            {[...rooms].sort((a, b) => {
+                                const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+                                const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+                                if (numA !== numB) return numA - numB;
+                                return a.name.localeCompare(b.name);
+                            }).map(room => (
+                                <div key={room.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all group overflow-hidden border border-gray-100 border-l-4 border-l-primary flex items-center justify-between p-3 h-[60px]">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="size-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0 transition-transform group-hover:scale-110">
+                                            <span className="material-symbols-outlined text-lg">meeting_room</span>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h5 className="font-black text-gray-900 text-sm leading-tight truncate group-hover:text-primary transition-colors uppercase tracking-tight" title={room.name}>
+                                                {room.name}
+                                            </h5>
+                                            <div className="flex items-center gap-2">
+                                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    Ramal: {room.extension || '-'}
+                                                 </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                        <button 
+                                            onClick={() => (setRoomForm({ name: room.name, extension: room.extension || '' }), setEditingRoomId(room.id))} 
+                                            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+                                            title="Editar"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">edit</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteRoom(room.id)} 
+                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                            title="Excluir"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {rooms.length === 0 && (
-                        <div className="text-center py-20 text-gray-400 italic">
-                            Nenhuma sala cadastrada para este setor.
+                        <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[40px] border-2 border-dashed border-gray-100 shadow-sm text-center">
+                            <div className="size-24 bg-primary/5 rounded-full flex items-center justify-center mb-6 border border-primary/10">
+                                <span className="material-symbols-outlined text-5xl text-primary opacity-30">meeting_room</span>
+                            </div>
+                            <h4 className="font-black text-gray-700 text-xl tracking-tight">Nenhuma sala configurada</h4>
+                            <p className="text-gray-400 mt-2 max-w-xs font-medium">Cadastre salas para começar a alocar profissionais neste setor.</p>
                         </div>
                     )}
                 </div>
