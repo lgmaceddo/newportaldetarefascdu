@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import Users from './pages/Users';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Contacts from './pages/Contacts';
 import { NotificationProvider } from './contexts/NotificationContext';
 
 const AdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -42,6 +43,7 @@ const App: React.FC = () => {
               <Route path="mapa" element={<DailyMap />} />
               <Route path="profissionais" element={<Professionals />} />
               <Route path="recepcao" element={<Receptionists />} />
+              <Route path="contatos" element={<Contacts />} />
               
               <Route path="usuarios" element={
                 <AdminRoute>

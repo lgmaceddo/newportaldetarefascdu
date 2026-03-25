@@ -15,8 +15,7 @@ const Sidebar: React.FC = () => {
 
   // Define menu structure
   const allNavItems: NavItem[] = [
-    {
-      name: 'Agenda',
+    { name: 'Agenda',
       icon: 'calendar_month',
       subItems: [
         { name: 'Confirmar Consulta', icon: 'event_available', path: '/agenda/confirmacao' },
@@ -26,6 +25,7 @@ const Sidebar: React.FC = () => {
       ]
     },
     { name: 'Recados', icon: 'mail', path: '/recados' },
+    { name: 'Contatos', icon: 'contact_page', path: '/contatos' },
     { name: 'Mapa Diário', icon: 'map', path: '/mapa' },
     { name: 'Scripts', icon: 'description', path: '/scripts' },
     { name: 'Equipe Recepção', icon: 'groups', path: '/recepcao' },
