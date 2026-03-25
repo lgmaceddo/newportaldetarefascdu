@@ -31,22 +31,22 @@ const Sidebar: React.FC = () => {
     { name: 'Equipe Recepção', icon: 'groups', path: '/recepcao' },
     { name: 'Corpo Clínico', icon: 'manage_accounts', path: '/profissionais' },
     { name: 'Usuários', icon: 'admin_panel_settings', path: '/usuarios' },
-    { name: 'Dashboard', icon: 'dashboard', path: '/' },
     { name: 'Configurações', icon: 'settings', path: '/configuracoes' },
   ];
 
-  // Filter items based on user role
+  // Filter items based on user role and permissions
   const navItems = allNavItems.filter(item => {
-    // Doctor View: Restricted to Dashboard, Tarefas
+    // Admin only pages
+    if (['Usuários', 'Configurações'].includes(item.name) && !user?.isAdmin) {
+      return false;
+    }
+
+    // Doctor View: Restricted to Recados only
     if (user?.role === 'doctor') {
-      return ['Dashboard', 'Recados'].includes(item.name);
+      return ['Recados'].includes(item.name);
     }
 
-    // Reception View: Show everything (Dashboard is already in allNavItems at the specific position)
-    if (user?.role === 'reception') {
-      return true;
-    }
-
+    // Reception View: Show everything allowed (Admin/Config already filtered above)
     return true;
   });
 

@@ -242,7 +242,9 @@ const Professionals: React.FC = () => {
         }
     };
 
-    const isAdmin = currentUser?.isAdmin;
+    const canManage = currentUser?.isAdmin || currentUser?.role === 'reception';
+
+    const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 
     return (
         <div className="flex flex-col gap-6 h-full relative">
@@ -258,103 +260,116 @@ const Professionals: React.FC = () => {
 
             <div className="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Corpo Clínico</h2>
-                    <p className="text-gray-500">Gestão dos médicos e especialistas do setor.</p>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Corpo Clínico</h2>
+                    <p className="text-gray-500 font-medium tracking-tight">Quadro médico especializado (Setor: <span className="text-primary font-bold">{selectedFloor}</span>)</p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <div className="relative flex-1 md:w-72 group">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">search</span>
                         <input
                             type="text"
-                            placeholder="Buscar médico..."
+                            placeholder="Buscar médico ou especialidade..."
                             value={search}
                             onChange={handleSearch}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white transition-all shadow-sm"
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 bg-white transition-all shadow-sm"
                         />
                     </div>
-                    {isAdmin && (
+                    {canManage && (
                         <button
                             onClick={() => openModal()}
-                            className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20 active:scale-95 whitespace-nowrap"
+                            className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20 active:scale-95 whitespace-nowrap"
                         >
                             <span className="material-symbols-outlined">person_add</span>
-                            Novo Médico
+                            Novo Cadastro
                         </button>
                     )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-6">
-                {filtered.map(professional => {
+            {/* LIST HEADER */}
+            <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                <div className="col-span-5">Profissional / Identificação</div>
+                <div className="col-span-3">Especialidade / Título</div>
+                <div className="col-span-2">Contato / WhatsApp</div>
+                <div className="col-span-2 text-right">Gestão</div>
+            </div>
+
+            <div className="flex flex-col gap-2 pb-10">
+                {sorted.map(professional => {
                     const style = getStyleByName(professional.name, professional.gender);
 
                     return (
                         <div
                             key={professional.id}
-                            className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col border border-gray-100 border-l-[6px] ${style.borderLeft} min-h-[140px] h-full`}
+                            className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all group overflow-hidden border border-gray-100 border-l-[6px] ${style.borderLeft}`}
                         >
-                            <div className="p-4 flex flex-col gap-3 h-full">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex items-start gap-3 w-full">
-                                        <div className={`size-11 shrink-0 rounded-full flex items-center justify-center font-bold text-sm tracking-widest ${style.bg} ${style.text} relative`}>
-                                            {getInitials(professional.name)}
-                                            <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${getStatusDotColor(professional.status)}`}></div>
-                                        </div>
-
-                                        <div className="min-w-0 flex-1 flex flex-col">
-                                            <h3 className="font-black text-gray-800 text-sm leading-tight whitespace-normal break-words" title={professional.name}>
-                                                {professional.name}
-                                            </h3>
-                                            <div className="flex flex-col gap-1 mt-1">
-                                                <p className="text-[10px] text-primary-dark font-bold uppercase tracking-wide whitespace-normal break-words opacity-80">
-                                                    {professional.specialty}
-                                                </p>
-                                                <p className="text-[9px] text-gray-400 font-bold uppercase flex items-center gap-1 whitespace-normal break-words">
-                                                    <span className="material-symbols-outlined text-[11px]">location_on</span>
-                                                    {professional.sector}
-                                                </p>
-                                            </div>
+                            <div className="px-5 py-4 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                                {/* Info Principal */}
+                                <div className="col-span-1 lg:col-span-5 flex items-center gap-4">
+                                    <div className={`size-12 shrink-0 rounded-xl flex items-center justify-center font-bold text-sm tracking-widest ${style.bg} ${style.text} relative shadow-inner border border-gray-100/50`}>
+                                        {getInitials(professional.name)}
+                                        <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white ${getStatusDotColor(professional.status)} shadow-sm`}></div>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-black text-gray-900 text-sm lg:text-base leading-tight truncate group-hover:text-primary transition-colors">
+                                            {professional.name}
+                                        </h3>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${professional.gender === 'female' ? 'bg-purple-100 text-purple-600' : 'bg-primary/10 text-primary'}`}>
+                                                {professional.gender === 'female' ? 'DRA' : 'DR'}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight flex items-center gap-1 opacity-70">
+                                                <span className="material-symbols-outlined text-[12px]">location_on</span>
+                                                {professional.sector}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="mt-auto flex flex-col gap-2">
-                                    <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
-                                        {professional.phone ? (
-                                            <a
-                                                href={`tel:${professional.phone}`}
-                                                className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-primary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg flex-1 border border-transparent hover:border-primary/10"
-                                            >
-                                                <span className={`material-symbols-outlined text-sm ${style.iconText}`}>call</span>
-                                                {professional.phone}
-                                            </a>
-                                        ) : (
-                                            <span className="text-[10px] text-gray-400 italic px-2 py-1.5 flex-1 bg-gray-25/50 rounded flex items-center gap-1">
-                                                <span className="material-symbols-outlined text-sm">phone_disabled</span>
-                                                Sem contato
-                                            </span>
-                                        )}
+                                {/* Especialidade */}
+                                <div className="col-span-1 lg:col-span-3">
+                                    <div className="inline-flex items-center px-3 py-1 rounded-lg bg-gray-50 text-[10px] text-primary-dark font-black uppercase tracking-wider border border-primary/5">
+                                        {professional.specialty}
                                     </div>
+                                </div>
 
-                                    {isAdmin && (
-                                        <div className="flex items-center justify-end gap-1.5 border-t border-gray-50/50 pt-2">
+                                {/* Contato */}
+                                <div className="col-span-1 lg:col-span-2">
+                                    {professional.phone ? (
+                                        <a
+                                            href={`tel:${professional.phone}`}
+                                            className="inline-flex items-center gap-2 text-xs font-black text-gray-600 hover:text-primary transition-colors bg-gray-25 px-2 py-1.5 rounded-lg border border-transparent hover:border-primary/10"
+                                        >
+                                            <span className={`material-symbols-outlined text-base ${style.iconText}`}>call</span>
+                                            {professional.phone}
+                                        </a>
+                                    ) : (
+                                        <span className="text-[10px] text-gray-400 italic font-medium opacity-50 px-2">Sem cadastro</span>
+                                    )}
+                                </div>
+
+                                {/* Ações */}
+                                <div className="col-span-1 lg:col-span-2 flex items-center justify-end gap-2">
+                                    {canManage && (
+                                        <>
                                             <button
                                                 onClick={() => openModal(professional)}
-                                                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-gray-500 hover:text-primary hover:bg-primary-light rounded-md transition-all uppercase tracking-wider"
+                                                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all"
+                                                title="Editar Registro"
                                             >
-                                                <span className="material-symbols-outlined text-base">edit</span>
-                                                Editar
+                                                <span className="material-symbols-outlined text-lg">edit</span>
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(professional.id)}
-                                                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-md transition-all uppercase tracking-wider"
+                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                                title="Remover"
                                             >
-                                                <span className="material-symbols-outlined text-base">delete</span>
-                                                Excluir
+                                                <span className="material-symbols-outlined text-lg">delete</span>
                                             </button>
-                                        </div>
+                                        </>
                                     )}
+                                    <span className="material-symbols-outlined text-gray-200 select-none hidden lg:block">drag_indicator</span>
                                 </div>
                             </div>
                         </div>
@@ -363,19 +378,19 @@ const Professionals: React.FC = () => {
             </div>
 
             {filtered.length === 0 && (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 py-16 bg-white rounded-2xl border border-dashed border-gray-200">
-                    <div className="size-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                        <span className="material-symbols-outlined text-4xl opacity-20">person_search</span>
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100 shadow-sm">
+                    <div className="size-24 bg-gray-50 rounded-3xl flex items-center justify-center mb-6 border border-gray-100">
+                        <span className="material-symbols-outlined text-5xl opacity-20">person_search</span>
                     </div>
-                    <p className="font-bold text-gray-500">Nenhum profissional cadastrado para este setor.</p>
-                    <p className="text-xs text-gray-400 mt-1">Setor atual: <span className="text-primary font-bold">{selectedFloor}</span></p>
-                    {isAdmin && (
+                    <h4 className="font-black text-gray-600 text-lg">Nenhum profissional encontrado</h4>
+                    <p className="text-sm text-gray-400 mt-2 max-w-xs text-center">Não existem médicos cadastrados no setor <span className="text-primary font-extrabold">{selectedFloor}</span> com estes critérios.</p>
+                    {canManage && (
                         <button
                             onClick={() => openModal()}
-                            className="mt-6 text-primary font-bold text-sm hover:underline flex items-center gap-2"
+                            className="mt-8 bg-primary/10 text-primary hover:bg-primary hover:text-white px-8 py-3 rounded-2xl font-bold text-sm transition-all flex items-center gap-2 border border-primary/20"
                         >
                             <span className="material-symbols-outlined">add</span>
-                            Cadastrar o primeiro médico aqui
+                            Cadastrar Profissional Agora
                         </button>
                     )}
                 </div>
@@ -383,122 +398,134 @@ const Professionals: React.FC = () => {
 
             {/* Modal de Criação/Edição */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col scale-in">
-                        <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                    <span className="material-symbols-outlined">medical_services</span>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+                        <div className="px-8 py-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                                <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
+                                    <span className="material-symbols-outlined text-2xl">medical_services</span>
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-900">{editingProfessional ? 'Editar' : 'Novo'} Profissional</h3>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Identificação no Sistema</p>
+                                    <h3 className="font-black text-xl text-gray-900 leading-none">{editingProfessional ? 'Editar' : 'Novo'} Profissional</h3>
+                                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-[0.2em] mt-1.5">Cadastro do Corpo Clínico</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setIsModalOpen(false)} className="size-10 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-5">
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="p-8 space-y-7">
+                            <div className="grid grid-cols-2 gap-5">
                                 <div
                                     onClick={() => setFormData({ ...formData, gender: 'male' })}
-                                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.gender === 'male' ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}
+                                    className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${formData.gender === 'male' ? 'border-primary bg-primary/5 ring-4 ring-primary/5' : 'border-gray-50 hover:border-gray-200 bg-gray-50/50'}`}
                                 >
-                                    <span className="material-symbols-outlined text-3xl text-primary">male</span>
+                                    <div className={`size-12 rounded-xl flex items-center justify-center transition-colors ${formData.gender === 'male' ? 'bg-primary text-white' : 'bg-white text-gray-400 shadow-sm'}`}>
+                                        <span className="material-symbols-outlined text-2xl">male</span>
+                                    </div>
                                     <div className="text-center">
-                                        <p className="font-bold text-sm">Masculino</p>
-                                        <p className="text-[10px] text-gray-400 font-bold">DRº</p>
+                                        <p className={`font-black text-sm ${formData.gender === 'male' ? 'text-primary' : 'text-gray-500'}`}>Masculino</p>
+                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-0.5">Título: DRº</p>
                                     </div>
                                 </div>
                                 <div
                                     onClick={() => setFormData({ ...formData, gender: 'female' })}
-                                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.gender === 'female' ? 'border-purple-400 bg-purple-50' : 'border-gray-100 hover:border-gray-200'}`}
+                                    className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${formData.gender === 'female' ? 'border-purple-400 bg-purple-50 ring-4 ring-purple-100' : 'border-gray-50 hover:border-gray-200 bg-gray-50/50'}`}
                                 >
-                                    <span className="material-symbols-outlined text-3xl text-purple-500">female</span>
+                                    <div className={`size-12 rounded-xl flex items-center justify-center transition-colors ${formData.gender === 'female' ? 'bg-purple-500 text-white' : 'bg-white text-gray-400 shadow-sm'}`}>
+                                        <span className="material-symbols-outlined text-2xl">female</span>
+                                    </div>
                                     <div className="text-center">
-                                        <p className="font-bold text-sm">Feminino</p>
-                                        <p className="text-[10px] text-gray-400 font-bold">DRª</p>
+                                        <p className={`font-black text-sm ${formData.gender === 'female' ? 'text-purple-700' : 'text-gray-500'}`}>Feminino</p>
+                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-0.5">Título: DRª</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Nome do Profissional (Sem título)</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">person</span>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest ml-1">Nome do Profissional (Nome Completo)</label>
+                                    <div className="relative group">
+                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">person</span>
                                         <input
                                             type="text"
-                                            placeholder="Ex: Ricardo Silva"
+                                            placeholder="Ex: Ricardo de Oliveira Silva"
                                             value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                                            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none transition-all font-bold text-gray-800 shadow-sm"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div>
-                                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Especialidade</label>
-                                        <select
-                                            value={formData.specialty}
-                                            onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm bg-white"
-                                        >
-                                            <option value="">Selecione...</option>
-                                            {MEDICAL_SPECIALTIES.map(spec => (
-                                                <option key={spec} value={spec}>{spec}</option>
-                                            ))}
-                                        </select>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest ml-1">Especialidade Principal</label>
+                                        <div className="relative group">
+                                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary z-10">stethoscope</span>
+                                            <select
+                                                value={formData.specialty}
+                                                onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                                                className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none transition-all font-bold text-gray-700 bg-white appearance-none cursor-pointer relative"
+                                            >
+                                                <option value="">Selecione Especialidade...</option>
+                                                {MEDICAL_SPECIALTIES.map(spec => (
+                                                    <option key={spec} value={spec}>{spec}</option>
+                                                ))}
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">expand_more</span>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Setor que Atende</label>
-                                        <select
-                                            value={formData.sector}
-                                            onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm bg-white"
-                                        >
-                                            {FLOOR_OPTIONS.map(opt => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest ml-1">Setor de Atendimento</label>
+                                        <div className="relative group">
+                                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary z-10">business</span>
+                                            <select
+                                                value={formData.sector}
+                                                onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
+                                                className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none transition-all font-bold text-gray-700 bg-white appearance-none cursor-pointer"
+                                            >
+                                                {FLOOR_OPTIONS.map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">expand_more</span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Telefone / Contato</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">call</span>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest ml-1">Telefone de Contato (WhatsApp)</label>
+                                    <div className="relative group">
+                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">call</span>
                                         <input
                                             type="text"
                                             placeholder="(XX) XXXXX-XXXX"
                                             value={formData.phone}
                                             onChange={(e) => {
-                                                let v = e.target.value.replace(/\D/g, '');
+                                                let v = e.target.value.replace(/\D/g, '').slice(0, 11);
                                                 if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
-                                                if (v.length > 9) v = `${v.slice(0, 9)}-${v.slice(9, 13)}`;
+                                                if (v.length > 9) v = `${v.slice(0, 9)}-${v.slice(9)}`;
                                                 setFormData({ ...formData, phone: v });
                                             }}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-primary outline-none text-sm"
+                                            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none transition-all font-bold text-gray-800 shadow-sm"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="pt-4 flex gap-3">
+                            <div className="pt-4 flex gap-4">
                                 <button
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-colors"
+                                    className="flex-1 py-4 text-gray-500 font-extrabold hover:bg-gray-50 rounded-2xl transition-all border border-transparent hover:border-gray-100"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="flex-1 py-3 bg-primary text-white font-bold hover:bg-primary-dark rounded-xl transition-colors shadow-lg shadow-primary/30 transform active:scale-95"
+                                    className="flex-2 py-4 bg-primary text-white font-black hover:bg-primary-dark rounded-2xl transition-all shadow-xl shadow-primary/30 transform active:scale-95 px-8"
                                 >
-                                    {editingProfessional ? 'Salvar Alterações' : 'Criar Profissional'}
+                                    {editingProfessional ? 'Atualizar Registro' : 'Finalizar Cadastro'}
                                 </button>
                             </div>
                         </div>

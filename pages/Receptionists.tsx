@@ -76,69 +76,82 @@ const Receptionists: React.FC = () => {
         }
     };
 
+    const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+
     return (
         <div className="flex flex-col gap-6 h-full">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-3 shrink-0">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-4 shrink-0">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 leading-none mb-1">Equipe de Recepção</h2>
-                    <p className="text-gray-500 text-sm">Gestão de colaboradores e setores.</p>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">Equipe de Recepção</h2>
+                    <p className="text-gray-500 font-medium">Gestão de colaboradores e alocação por setores.</p>
                 </div>
 
-                <div className="relative w-full md:w-64">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <div className="relative w-full md:w-72 group">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-secondary transition-colors">search</span>
                     <input
                         type="text"
-                        placeholder="Buscar colaborador..."
+                        placeholder="Buscar colaborador ou setor..."
                         value={search}
                         onChange={handleSearch}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white text-sm"
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/10 bg-white transition-all shadow-sm font-medium"
                     />
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-6 overflow-y-auto pr-1">
-                {filtered.map(receptionist => (
+            {/* LIST HEADER */}
+            <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                <div className="col-span-6">Colaborador / Nome</div>
+                <div className="col-span-3">Setor / Localização</div>
+                <div className="col-span-3 text-right">Contato / Ramal</div>
+            </div>
+
+            <div className="flex flex-col gap-2 pb-10 overflow-y-auto pr-1">
+                {sorted.map(receptionist => (
                     <div
                         key={receptionist.id}
-                        className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col border border-gray-100 border-l-[6px] border-l-secondary min-h-[140px] h-full"
+                        className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all group overflow-hidden border border-gray-100 border-l-[6px] border-l-secondary"
                     >
-                        <div className="p-4 flex flex-col gap-3 h-full">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="size-11 shrink-0 rounded-full flex items-center justify-center font-bold text-sm tracking-widest bg-orange-50 text-orange-600 relative">
-                                        {receptionist.avatar ? (
-                                            <img src={receptionist.avatar} alt={receptionist.name} className="w-full h-full object-cover rounded-full" />
-                                        ) : (
-                                            getInitials(receptionist.name)
-                                        )}
-                                        <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${getStatusDotColor(receptionist.status)}`}></div>
-                                    </div>
+                        <div className="px-5 py-4 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                            {/* Info Principal */}
+                            <div className="col-span-1 lg:col-span-6 flex items-center gap-4">
+                                <div className="size-11 shrink-0 rounded-xl flex items-center justify-center font-bold text-sm tracking-widest bg-orange-50 text-orange-600 relative border border-orange-100 shadow-inner">
+                                    {receptionist.avatar ? (
+                                        <img src={receptionist.avatar} alt={receptionist.name} className="w-full h-full object-cover rounded-xl" />
+                                    ) : (
+                                        getInitials(receptionist.name)
+                                    )}
+                                    <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white ${getStatusDotColor(receptionist.status)} shadow-sm`}></div>
+                                </div>
 
-                                    <div className="min-w-0 flex-1 flex flex-col">
-                                        <h3 className="font-bold text-gray-800 text-sm leading-tight whitespace-normal break-words" title={receptionist.name}>
-                                            {receptionist.name}
-                                        </h3>
-                                        <p className="text-[9px] text-gray-400 font-bold uppercase flex items-center gap-1 mt-1 whitespace-normal break-words">
-                                            <span className="material-symbols-outlined text-[10px]">location_on</span>
-                                            {receptionist.sector}
-                                        </p>
-                                    </div>
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="font-black text-gray-900 text-sm lg:text-base leading-tight truncate group-hover:text-secondary transition-colors" title={receptionist.name}>
+                                        {receptionist.name}
+                                    </h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-0.5 opacity-70">Colaborador Unimed</p>
                                 </div>
                             </div>
 
-                            <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
+                            {/* Setor */}
+                            <div className="col-span-1 lg:col-span-3 flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-secondary text-base">location_on</span>
+                                <span className="text-[10px] text-gray-600 font-black uppercase tracking-wider bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                    {receptionist.sector}
+                                </span>
+                            </div>
+
+                            {/* Contato */}
+                            <div className="col-span-1 lg:col-span-3 flex justify-end">
                                 {receptionist.phone ? (
                                     <a
                                         href={`tel:${receptionist.phone}`}
-                                        className="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-secondary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg w-full"
+                                        className="inline-flex items-center gap-2 text-xs font-black text-gray-600 hover:text-white hover:bg-secondary transition-all bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 shadow-sm"
                                     >
-                                        <span className="material-symbols-outlined text-sm text-secondary">call</span>
+                                        <span className="material-symbols-outlined text-base">call</span>
                                         {receptionist.phone}
                                     </a>
                                 ) : (
-                                    <span className="text-[10px] text-gray-400 italic px-2 py-1.5 w-full bg-gray-25/50 rounded flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-sm">phone_disabled</span>
-                                        Sem contato
+                                    <span className="text-[10px] text-gray-400 italic font-medium bg-gray-25/50 px-4 py-2 rounded-xl border border-dashed border-gray-100">
+                                        Sem ramal
                                     </span>
                                 )}
                             </div>
@@ -146,6 +159,16 @@ const Receptionists: React.FC = () => {
                     </div>
                 ))}
             </div>
+
+            {filtered.length === 0 && (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100 shadow-sm">
+                    <div className="size-24 bg-gray-50 rounded-3xl flex items-center justify-center mb-6 border border-gray-100">
+                        <span className="material-symbols-outlined text-5xl opacity-20">person_search</span>
+                    </div>
+                    <h4 className="font-black text-gray-600 text-lg">Nenhum colaborador encontrado</h4>
+                    <p className="text-sm text-gray-400 mt-2">Tente ajustar sua busca ou filtros.</p>
+                </div>
+            )}
 
             {filtered.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-400">

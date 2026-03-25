@@ -259,12 +259,14 @@ const Users: React.FC = () => {
 
     const isUserAdmin = currentUser?.isAdmin;
 
+    const sortedUsers = [...filteredUsers].sort((a, b) => a.name.localeCompare(b.name));
+
     return (
         <div className="flex flex-col gap-6 h-full relative">
             {/* Toast */}
             {toastMessage && (
                 <div className="fixed top-20 right-10 z-[100] animate-in fade-in slide-in-from-top-2">
-                    <div className="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
+                    <div className="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3 border border-white/10">
                         <span className="material-symbols-outlined text-green-400">check_circle</span>
                         <span className="text-sm font-bold">{toastMessage}</span>
                     </div>
@@ -274,24 +276,24 @@ const Users: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Gerenciamento de Usuários</h2>
-                    <p className="text-gray-500">Controle de acesso e permissões do sistema.</p>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Gestão de Usuários</h2>
+                    <p className="text-gray-500 font-medium">Controle de acesso e permissões gerais do sistema.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 flex items-center gap-3 shadow-sm">
-                        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                            <span className="material-symbols-outlined">shield_person</span>
+                    <div className="hidden sm:flex bg-white px-4 py-2 rounded-xl border border-gray-100 items-center gap-3 shadow-sm">
+                        <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                            <span className="material-symbols-outlined font-black">shield_person</span>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500 font-bold uppercase">Staff Ativo</p>
-                            <p className="text-xl font-bold text-gray-800 leading-none">{users.length}</p>
+                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Colaboradores</p>
+                            <p className="text-lg font-black text-gray-800 leading-none">{users.length}</p>
                         </div>
                     </div>
                     {isUserAdmin && (
                         <button
                             onClick={openCreateModal}
-                            className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20 active:scale-95"
+                            className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 transition-all shadow-xl shadow-primary/20 active:scale-95"
                         >
                             <span className="material-symbols-outlined">add_circle</span>
                             Novo Usuário
@@ -301,127 +303,146 @@ const Users: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="flex p-1 bg-gray-50 rounded-xl w-full md:w-auto">
                     {[
                         { id: 'all', label: 'Todos', icon: 'group' },
-                        { id: 'doctor', label: 'Corpo Clínico', icon: 'stethoscope' },
+                        { id: 'doctor', label: 'Médicos', icon: 'stethoscope' },
                         { id: 'reception', label: 'Recepção', icon: 'support_agent' }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === tab.id
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            className={`flex-1 md:flex-none px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${activeTab === tab.id
+                                ? 'bg-white text-primary shadow-sm ring-1 ring-gray-100'
+                                : 'text-gray-400 hover:text-gray-600'
                                 }`}
                         >
                             <span className="material-symbols-outlined text-lg">{tab.icon}</span>
-                            <span className="hidden sm:inline">{tab.label}</span>
+                            <span>{tab.label}</span>
                         </button>
                     ))}
                 </div>
 
-                <div className="relative w-full md:w-64">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <div className="relative w-full md:w-80 group">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">search</span>
                     <input
                         type="text"
-                        placeholder="Buscar usuário..."
+                        placeholder="Pesquisar por nome ou cargo..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 text-sm border-none bg-transparent outline-none focus:ring-0 placeholder-gray-400"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-transparent bg-gray-50 rounded-xl focus:bg-white focus:border-primary/20 outline-none transition-all font-medium"
                     />
                 </div>
             </div>
 
+            {/* LIST HEADER */}
+            <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                <div className="col-span-4">Usuário / Identificação</div>
+                <div className="col-span-2">Tipo / Acesso</div>
+                <div className="col-span-2">Admin</div>
+                <div className="col-span-2">Contato</div>
+                <div className="col-span-2 text-right">Ações</div>
+            </div>
+
             {/* Users List */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 pb-10">
-                {filteredUsers.map(u => {
+            <div className="flex flex-col gap-2 pb-10">
+                {sortedUsers.map(u => {
                     const style = getStyleByRole(u.roleType, u.name, u.gender);
 
                     return (
                         <div
                             key={u.id}
-                            className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col border border-gray-100 border-l-[6px] ${style.borderLeft}`}
+                            className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all group overflow-hidden border border-gray-100 border-l-[6px] ${style.borderLeft}`}
                         >
-                            {u.isAdmin && (
-                                <div className="absolute top-0 right-0 bg-primary text-white px-2 py-0.5 rounded-bl-lg text-[9px] font-bold uppercase tracking-widest z-10 shadow-sm flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[10px]">verified_user</span>
-                                    Admin
-                                </div>
-                            )}
-
-                            <div className="p-4 flex flex-col gap-3 h-full pt-6">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-3 overflow-hidden w-full">
-                                        <div className={`size-11 shrink-0 rounded-full flex items-center justify-center font-bold text-sm tracking-widest ${style.bg} ${style.text} relative`}>
-                                            {u.avatar ? (
-                                                <img src={u.avatar} alt={u.name} className="w-full h-full object-cover rounded-full" />
-                                            ) : (
-                                                getInitials(u.name)
-                                            )}
-                                            <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${getStatusDotColor(u.status)}`}></div>
-                                        </div>
-
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm leading-tight truncate" title={u.name}>
-                                                {u.name}
-                                            </h3>
-                                            <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wide mt-0.5 truncate">
-                                                {u.roleDisplay}
-                                            </p>
-                                        </div>
+                            <div className="px-5 py-4 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                                {/* Info Principal */}
+                                <div className="col-span-1 lg:col-span-4 flex items-center gap-4">
+                                    <div className={`size-11 shrink-0 rounded-xl flex items-center justify-center font-bold text-sm tracking-widest ${style.bg} ${style.text} relative shadow-inner border border-gray-100/50`}>
+                                        {u.avatar ? (
+                                            <img src={u.avatar} alt={u.name} className="w-full h-full object-cover rounded-xl" />
+                                        ) : (
+                                            getInitials(u.name)
+                                        )}
+                                        <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white ${getStatusDotColor(u.status)} shadow-sm`}></div>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-black text-gray-900 text-sm lg:text-base leading-tight truncate group-hover:text-primary transition-colors">
+                                            {u.name}
+                                        </h3>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight truncate opacity-70">
+                                            {u.email || 'Sem e-mail cadastrado'}
+                                        </p>
                                     </div>
                                 </div>
 
-                                {isUserAdmin && (
-                                    <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-100">
-                                        <span className="text-[10px] uppercase font-bold text-gray-400">Acesso Admin</span>
-                                        <label className="relative inline-flex items-center cursor-pointer scale-75">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={u.isAdmin}
-                                                onChange={() => toggleAdmin(u.id, u.isAdmin)}
-                                                disabled={u.id === currentUser?.id}
-                                            />
-                                            <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                                        </label>
+                                {/* Cargo/Tipo */}
+                                <div className="col-span-1 lg:col-span-2">
+                                    <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border ${u.roleType === 'doctor' ? 'bg-primary/5 text-primary border-primary/10' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                                        {u.roleDisplay}
                                     </div>
-                                )}
+                                </div>
 
-                                <div className="mt-auto pt-3 border-t border-gray-50 flex items-center gap-2">
+                                {/* Admin Toggle */}
+                                <div className="col-span-1 lg:col-span-2">
+                                    {isUserAdmin ? (
+                                        <div className="flex items-center gap-3">
+                                            <label className="relative inline-flex items-center cursor-pointer scale-90">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={u.isAdmin}
+                                                    onChange={() => toggleAdmin(u.id, u.isAdmin)}
+                                                    disabled={u.id === currentUser?.id}
+                                                />
+                                                <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                            </label>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${u.isAdmin ? 'text-primary' : 'text-gray-300'}`}>
+                                                {u.isAdmin ? 'Admin' : 'Membro'}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${u.isAdmin ? 'text-primary' : 'text-gray-300'}`}>
+                                            {u.isAdmin ? 'Admin' : 'Membro'}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Contato */}
+                                <div className="col-span-1 lg:col-span-2">
                                     {u.phone ? (
                                         <a
                                             href={`tel:${u.phone}`}
-                                            className="flex-1 flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-primary transition-colors bg-gray-50 px-2 py-1.5 rounded-lg truncate"
-                                            title={u.phone}
+                                            className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-primary transition-colors"
                                         >
-                                            <span className={`material-symbols-outlined text-sm ${style.iconText}`}>call</span>
-                                            <span className="truncate">{u.phone}</span>
+                                            <span className={`material-symbols-outlined text-base ${style.iconText}`}>call</span>
+                                            {u.phone}
                                         </a>
                                     ) : (
-                                        <span className="flex-1 text-[10px] text-gray-400 italic px-2 py-1.5">Sem contato</span>
+                                        <span className="text-[10px] text-gray-300 italic">N/A</span>
                                     )}
+                                </div>
 
+                                {/* Ações */}
+                                <div className="col-span-1 lg:col-span-2 flex items-center justify-end gap-1">
                                     {isUserAdmin && (
-                                        <div className="flex items-center gap-1 shrink-0">
+                                        <>
                                             <button
                                                 onClick={() => openEditModal(u)}
-                                                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors border border-transparent hover:border-primary/20"
+                                                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all"
                                                 title="Editar"
                                             >
                                                 <span className="material-symbols-outlined text-lg">edit</span>
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteUser(u.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all disabled:opacity-20"
                                                 title="Excluir"
                                                 disabled={u.id === currentUser?.id}
                                             >
                                                 <span className="material-symbols-outlined text-lg">delete</span>
                                             </button>
-                                        </div>
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -522,6 +543,22 @@ const Users: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     className="w-full p-3 border border-gray-200 rounded-xl focus:border-primary outline-none transition-all"
                                     placeholder="exemplo@unimedbauru.com.br"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Telefone / WhatsApp</label>
+                                <input
+                                    type="text"
+                                    value={formData.phone}
+                                    onChange={(e) => {
+                                        let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                        if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+                                        if (v.length > 9) v = `${v.slice(0, 9)}-${v.slice(9)}`;
+                                        setFormData({ ...formData, phone: v });
+                                    }}
+                                    className="w-full p-3 border border-gray-200 rounded-xl focus:border-primary outline-none transition-all font-bold"
+                                    placeholder="(XX) XXXXX-XXXX"
                                 />
                             </div>
 

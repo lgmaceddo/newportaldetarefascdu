@@ -731,7 +731,12 @@ const Tasks: React.FC = () => {
                                                         <input
                                                             type="text"
                                                             value={formData.patientPhone}
-                                                            onChange={e => setFormData({ ...formData, patientPhone: e.target.value })}
+                                                            onChange={e => {
+                                                                let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                                                if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+                                                                if (v.length > 9) v = `${v.slice(0, 9)}-${v.slice(9)}`;
+                                                                setFormData({ ...formData, patientPhone: v });
+                                                            }}
                                                             className="w-full p-3 border border-gray-300 rounded-xl focus:border-primary outline-none text-sm"
                                                             placeholder="(XX) XXXXX-XXXX"
                                                             disabled={!formData.isPatientRelated}
