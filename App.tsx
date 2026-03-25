@@ -30,7 +30,7 @@ const App: React.FC = () => {
               <Route path="agenda/confirmar-procedimento" element={<AgendaAI type="procedure_confirmation" />} />
               <Route path="agenda/espelho-diario" element={<AgendaAI type="daily_summary" />} />
               <Route path="scripts" element={<Scripts />} />
-              <Route path="tarefas" element={<Tasks />} />
+              <Route path="recados" element={<Tasks />} />
               <Route path="mapa" element={<DailyMap />} />
               <Route path="profissionais" element={<Professionals />} />
               <Route path="recepcao" element={<Receptionists />} />

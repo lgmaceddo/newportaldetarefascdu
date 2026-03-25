@@ -255,20 +255,6 @@ const Dashboard: React.FC = () => {
 
                     {/* Pending Items Cards - Vertical Stack */}
                     <div className="flex-1 flex flex-col gap-3 min-h-0">
-                        <NavLink to="/tarefas" className="bg-white hover:border-[#00995D]/30 transition-all p-5 rounded-[2rem] border border-gray-100 flex items-center gap-4 group shadow-sm flex-1">
-                            <div className="size-12 rounded-2xl bg-[#00995D]/5 flex items-center justify-center text-[#00995D] group-hover:bg-[#00995D] group-hover:text-white transition-all shrink-0">
-                                <span className="material-symbols-outlined font-bold">assignment</span>
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Minhas Tarefas</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-gray-800 tracking-tighter">{stats.pendingTasks}</span>
-                                    <span className="text-[10px] font-bold text-gray-400">{stats.highPriorityTasks > 0 ? `(${stats.highPriorityTasks} urgentes)` : 'em aberto'}</span>
-                                </div>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-hover:text-[#00995D] group-hover:translate-x-1 transition-all">arrow_forward</span>
-                        </NavLink>
-
                         <NavLink to="/recados" className="bg-white hover:border-[#00995D]/30 transition-all p-5 rounded-[2rem] border border-gray-100 flex items-center gap-4 group shadow-sm flex-1">
                             <div className="size-12 rounded-2xl bg-[#00995D]/5 flex items-center justify-center text-[#00995D] group-hover:bg-[#00995D] group-hover:text-white transition-all shrink-0">
                                 <span className="material-symbols-outlined font-bold">mail</span>

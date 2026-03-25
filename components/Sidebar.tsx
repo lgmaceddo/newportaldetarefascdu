@@ -25,7 +25,7 @@ const Sidebar: React.FC = () => {
         { name: 'Espelho Diário', icon: 'summarize', path: '/agenda/espelho-diario' },
       ]
     },
-    { name: 'Tarefas', icon: 'check_circle', path: '/tarefas' },
+    { name: 'Recados', icon: 'mail', path: '/recados' },
     { name: 'Mapa Diário', icon: 'map', path: '/mapa' },
     { name: 'Scripts', icon: 'description', path: '/scripts' },
     { name: 'Equipe Recepção', icon: 'groups', path: '/recepcao' },
@@ -39,7 +39,7 @@ const Sidebar: React.FC = () => {
   const navItems = allNavItems.filter(item => {
     // Doctor View: Restricted to Dashboard, Tarefas
     if (user?.role === 'doctor') {
-      return ['Dashboard', 'Tarefas'].includes(item.name);
+      return ['Dashboard', 'Recados'].includes(item.name);
     }
 
     // Reception View: Show everything (Dashboard is already in allNavItems at the specific position)

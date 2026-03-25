@@ -23,9 +23,9 @@ export interface Task {
   patientGuide?: string; // New: Guia
   patientPhone?: string; // New: Telefone
 
-  status: TaskStatus;
-  priority: Priority;
-  date: string;
+  status?: TaskStatus;
+  priority?: Priority;
+  date?: string;
   assignedTo?: string;
 
   // New Fields for "Recado" functionality in Tasks Tab

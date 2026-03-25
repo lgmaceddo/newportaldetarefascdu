@@ -13,28 +13,78 @@ const mockDoctors: Doctor[] = [
 const mockTasks: Task[] = [
     {
         id: '1',
-        title: 'Preparar laudo do paciente João',
-        description: 'Verificar as imagens de ressonância anexadas no sistema PACS e comparar com o exame anterior de 2022.',
+        title: 'Documentação Pendente',
+        description: 'Favor conferir a documentação do paciente João Silva para o exame de amanhã.',
         isPatientRelated: true,
         patient: 'João Silva',
         patientCard: '0032.1123.4432.00',
         patientPhone: '(14) 99887-7766',
-        status: TaskStatus.PENDING,
-        priority: Priority.HIGH,
+        taskType: 'message',
         date: '2023-10-27'
     },
     {
         id: '2',
-        title: 'Reunião de setor',
-        description: 'Discutir novas escalas de plantão para o próximo mês.',
+        title: 'Aviso de Reunião',
+        description: 'Reunião extraordinária no setor às 15h.',
         isPatientRelated: false,
-        status: TaskStatus.IN_PROGRESS,
-        priority: Priority.MEDIUM,
+        taskType: 'message',
         date: '2023-10-28'
-    },
-    { id: '3', title: 'Solicitar insumos', status: TaskStatus.DONE, priority: Priority.LOW, date: '2023-10-26' },
-    { id: '4', title: 'Confirmar cirurgias da semana', status: TaskStatus.PENDING, priority: Priority.HIGH, date: '2023-10-29' },
+    }
 ];
+
+const RichTextEditor = ({ value, onChange, placeholder }: { value: string, onChange: (v: string) => void, placeholder?: string }) => {
+    const editorRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (editorRef.current && editorRef.current.innerHTML !== value) {
+            editorRef.current.innerHTML = value || '';
+        }
+    }, [value]);
+
+    const handleInput = () => {
+        if (editorRef.current) {
+            onChange(editorRef.current.innerHTML);
+        }
+    };
+
+    const format = (command: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        document.execCommand(command, false, '');
+        if (editorRef.current) {
+            editorRef.current.focus();
+            onChange(editorRef.current.innerHTML);
+        }
+    };
+
+    return (
+        <div className="border border-gray-300 rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all shadow-sm bg-white relative">
+            <div className="bg-gray-50 border-b border-gray-200 p-2 flex flex-wrap gap-1">
+                <button type="button" onMouseDown={(e) => format('bold', e)} className="p-1 rounded hover:bg-gray-200 text-gray-700 font-bold w-7 text-center" title="Negrito">B</button>
+                <button type="button" onMouseDown={(e) => format('italic', e)} className="p-1 rounded hover:bg-gray-200 text-gray-700 italic w-7 text-center" title="Itálico">I</button>
+                <button type="button" onMouseDown={(e) => format('underline', e)} className="p-1 rounded hover:bg-gray-200 text-gray-700 underline w-7 text-center" title="Sublinhado">U</button>
+                <div className="w-[1px] h-5 bg-gray-300 mx-1 my-auto"></div>
+                <button type="button" onMouseDown={(e) => format('insertUnorderedList', e)} className="p-1 rounded hover:bg-gray-200 text-gray-700 flex items-center justify-center w-7" title="Lista Simples">
+                    <span className="material-symbols-outlined text-[16px]">format_list_bulleted</span>
+                </button>
+                <button type="button" onMouseDown={(e) => format('insertOrderedList', e)} className="p-1 rounded hover:bg-gray-200 text-gray-700 flex items-center justify-center w-7" title="Lista Numerada">
+                    <span className="material-symbols-outlined text-[16px]">format_list_numbered</span>
+                </button>
+            </div>
+            <div
+                ref={editorRef}
+                contentEditable
+                className="w-full p-3 outline-none text-sm min-h-[120px] max-h-[300px] overflow-y-auto"
+                onInput={handleInput}
+                onBlur={handleInput}
+            />
+            {(!value || value === '<br>') && (
+                <div className="absolute pointer-events-none text-gray-400 text-sm p-3 top-[40px] left-0">
+                    {placeholder}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const Tasks: React.FC = () => {
     const { user, selectedFloor, getFormattedDisplayName } = useAuth();
@@ -51,7 +101,8 @@ const Tasks: React.FC = () => {
     });
 
     const [selectedForBatch, setSelectedForBatch] = useState<string[]>([]);
-
+    
+    // PRINT REFS & HANDLERS
     const printableRef = useRef<HTMLDivElement>(null);
     const handlePrint = useReactToPrint({
         contentRef: printableRef,
@@ -74,8 +125,6 @@ const Tasks: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('mediportal_tasks', JSON.stringify(tasks));
     }, [tasks]);
-
-    const [filter, setFilter] = useState<TaskStatus | 'Active'>('Active');
     const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
     const [searchProfessional, setSearchProfessional] = useState('');
     const [showProfessionalResults, setShowProfessionalResults] = useState(false);
@@ -132,10 +181,8 @@ const Tasks: React.FC = () => {
         patientCard: '',
         patientGuide: '',
         patientPhone: '',
-        status: TaskStatus.PENDING,
-        priority: Priority.MEDIUM,
         date: new Date().toISOString().split('T')[0],
-        taskType: 'task',
+        taskType: 'message',
         messageType: 'Receita',
         authorName: '',
         recipientId: '',
@@ -143,27 +190,13 @@ const Tasks: React.FC = () => {
         sector: selectedFloor // Default to current selected floor
     });
 
-    // Filter Logic
+    // Filter Logic - Only Recados
     const filteredTasks = tasks.filter(task => {
-        // Sector Filtering: Only show tasks for the current selected floor
-        // (Legacy tasks without sector are shown for backward compatibility, or you can filter them out)
         if (task.sector && task.sector !== selectedFloor) return false;
-
-        if (filter === 'Active') {
-            return task.status !== TaskStatus.DONE;
-        }
-        return task.status === filter;
+        return task.taskType === 'message';
     });
 
     // Handlers
-    const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-        setTasks(prevTasks =>
-            prevTasks.map(task =>
-                task.id === taskId ? { ...task, status: newStatus } : task
-            )
-        );
-    };
-
     const handleOpenModal = (mode: 'view' | 'edit' | 'create', task?: Task) => {
         setModalMode(mode);
         if (task) {
@@ -180,10 +213,8 @@ const Tasks: React.FC = () => {
                 patientCard: '',
                 patientGuide: '',
                 patientPhone: '',
-                status: TaskStatus.PENDING,
-                priority: Priority.MEDIUM,
                 date: new Date().toISOString().split('T')[0],
-                taskType: 'task',
+                taskType: 'message',
                 messageType: 'Receita',
                 recipientId: '',
                 recipientName: '',
@@ -208,7 +239,7 @@ const Tasks: React.FC = () => {
             e.stopPropagation();
         }
 
-        if (window.confirm("Tem certeza que deseja excluir esta tarefa permanentemente?")) {
+        if (window.confirm("Tem certeza que deseja excluir este recado permanentemente?")) {
             setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
 
             // If the deleted task was open in the modal, close it
@@ -226,7 +257,7 @@ const Tasks: React.FC = () => {
 
     const handleSave = () => {
         if (!formData.title) {
-            alert("Por favor, preencha o título da tarefa.");
+            alert("Por favor, preencha o assunto do recado.");
             return;
         }
 
@@ -248,10 +279,7 @@ const Tasks: React.FC = () => {
                 patientCard: cleanData.patientCard,
                 patientGuide: cleanData.patientGuide,
                 patientPhone: cleanData.patientPhone,
-                status: cleanData.status as TaskStatus,
-                priority: cleanData.priority as Priority,
-                date: cleanData.date || new Date().toISOString().split('T')[0],
-                taskType: cleanData.taskType as 'task' | 'message',
+                taskType: 'message',
                 messageType: cleanData.messageType as 'Receita' | 'Medicamentos' | 'Outros',
                 authorName: getFormattedDisplayName(),
                 createdAt: new Date().toISOString(),
@@ -264,36 +292,17 @@ const Tasks: React.FC = () => {
         closeModal();
     };
 
-    const getPriorityColor = (p: Priority) => {
-        switch (p) {
-            case Priority.HIGH: return 'bg-red-100 text-red-700 border-red-200';
-            case Priority.MEDIUM: return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-            case Priority.LOW: return 'bg-blue-100 text-blue-700 border-blue-200';
-        }
-    };
-
-    const getStatusIcon = (s: TaskStatus) => {
-        switch (s) {
-            case TaskStatus.PENDING: return 'radio_button_unchecked';
-            case TaskStatus.IN_PROGRESS: return 'hourglass_empty';
-            case TaskStatus.DONE: return 'check_circle';
-        }
-    }
-
-    const getStatusStyles = (s: TaskStatus) => {
-        switch (s) {
-            case TaskStatus.DONE: return 'bg-green-100 text-green-600';
-            case TaskStatus.IN_PROGRESS: return 'bg-blue-100 text-blue-600';
-            default: return 'bg-gray-100 text-gray-500 group-hover:bg-gray-200';
-        }
-    }
+    // Remove unused helpers
+    const getPriorityColor = (p: any) => 'bg-gray-100';
+    const getStatusIcon = (s: any) => 'mail';
+    const getStatusStyles = (s: any) => 'bg-primary/10 text-primary';
 
     return (
         <div className="flex flex-col gap-6 relative">
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Portal de Tarefas CDU</h2>
-                    <p className="text-gray-500">Gestão Unificada de Atendimento - Fluxo de Trabalho.</p>
+                    <h2 className="text-2xl font-bold text-gray-900">Portal de Recados</h2>
+                    <p className="text-gray-500">Gestão de Recados e Comunicações Médicas.</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal('create')}
@@ -306,23 +315,9 @@ const Tasks: React.FC = () => {
 
             <div className="flex gap-2 overflow-x-auto pb-2 justify-between items-center w-full">
                 <div className="flex gap-2">
-                    {['Active', TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.DONE].map((status) => {
-                        let label = status;
-                        if (status === 'Active') label = 'Em Aberto';
-
-                        return (
-                            <button
-                                key={status}
-                                onClick={() => setFilter(status as any)}
-                                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filter === status
-                                    ? 'bg-primary text-white shadow-md'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                                    }`}
-                            >
-                                {label}
-                            </button>
-                        );
-                    })}
+                    <div className="bg-primary/5 text-primary px-4 py-2 rounded-full text-sm font-bold border border-primary/20">
+                        Todos os Recados
+                    </div>
                 </div>
                 {selectedForBatch.length > 0 && (
                     <div className="flex items-center gap-3 bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 animate-in slide-in-from-right-2">
@@ -349,7 +344,7 @@ const Tasks: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-                {filteredTasks.map((task) => (
+                {filteredTasks.filter(t => t.taskType === 'message').map((task) => (
                     <div
                         key={task.id}
                         onClick={() => handleOpenModal('view', task)}
@@ -369,24 +364,8 @@ const Tasks: React.FC = () => {
                                 </div>
                             )}
 
-                            <div className={`relative shrink-0 ${task.taskType !== 'message' ? 'ml-0' : ''}`} onClick={(e) => e.stopPropagation()}>
-                                <div
-                                    className={`p-3 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${getStatusStyles(task.status)}`}
-                                    title="Clique para alterar o status"
-                                >
-                                    <span className="material-symbols-outlined text-2xl pointer-events-none">{getStatusIcon(task.status)}</span>
-                                </div>
-                                <select
-                                    value={task.status}
-                                    onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                >
-                                    {Object.values(TaskStatus).map((status) => (
-                                        <option key={status} value={status}>
-                                            {status}
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                <span className="material-symbols-outlined text-2xl">mail</span>
                             </div>
 
                             <div className="flex-1 min-w-0">
@@ -399,11 +378,7 @@ const Tasks: React.FC = () => {
                                             <span className="material-symbols-outlined text-[12px]">chat_bubble</span>RECADO
                                         </span>
                                     )}
-                                    {task.taskType === 'task' && (
-                                        <span className="flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider shadow-sm">
-                                            <span className="material-symbols-outlined text-[12px]">assignment</span>TAREFA
-                                        </span>
-                                    )}
+                                    {/* Task label removed as only Messages are shown */}
                                     {task.isPatientRelated && task.patient && (
                                         <span className="flex items-center gap-1 bg-gray-50 text-gray-600 border border-gray-200 px-2 py-1 rounded-md font-medium text-[11px]">
                                             <span className="material-symbols-outlined text-[12px]">personal_injury</span>Pac: {task.patient}
@@ -413,12 +388,12 @@ const Tasks: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-none pt-4 lg:pt-0 mt-2 lg:mt-0">
+                        <div className="flex items-center gap-4 w-full lg:w-auto justify-end">
                             <div className="flex items-center gap-1">
                                 <button
                                     onClick={(e) => handleEditClick(task, e)}
                                     className="p-2 text-gray-400 hover:text-primary hover:bg-primary-light rounded-lg transition-colors z-10 relative"
-                                    title="Editar Tarefa"
+                                    title="Editar Recado"
                                     type="button"
                                 >
                                     <span className="material-symbols-outlined pointer-events-none">edit</span>
@@ -426,16 +401,12 @@ const Tasks: React.FC = () => {
                                 <button
                                     onClick={(e) => handleDelete(task.id, e)}
                                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors z-10 relative"
-                                    title="Excluir Tarefa"
+                                    title="Excluir Recado"
                                     type="button"
                                 >
                                     <span className="material-symbols-outlined pointer-events-none">delete</span>
                                 </button>
                             </div>
-
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getPriorityColor(task.priority)}`}>
-                                {task.priority}
-                            </span>
                         </div>
                     </div>
                 ))}
@@ -443,10 +414,10 @@ const Tasks: React.FC = () => {
                 {filteredTasks.length === 0 && (
                     <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
                         <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">
-                            {filter === TaskStatus.DONE ? 'playlist_add_check' : 'assignment_turned_in'}
+                            mail_outline
                         </span>
                         <p className="text-gray-500 font-medium">
-                            {filter === TaskStatus.DONE ? 'Nenhuma tarefa concluída ainda.' : 'Nenhuma tarefa pendente encontrada.'}
+                            Nenhum recado encontrado para este setor.
                         </p>
                     </div>
                 )}
@@ -461,15 +432,15 @@ const Tasks: React.FC = () => {
                         <div className="px-6 py-4 flex justify-between items-center shrink-0 bg-[#00665C] text-white">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-white/10 rounded-lg">
-                                    <span className="material-symbols-outlined text-white">
-                                        {formData.taskType === 'message' ? 'chat_bubble' : 'assignment'}
+                                    <span className="material-symbols-outlined">
+                                        chat_bubble
                                     </span>
                                 </div>
                                 <div className="flex flex-col">
                                     <h3 className="font-bold text-lg text-white leading-none">
-                                        {modalMode === 'create' && (formData.taskType === 'message' ? 'Novo Recado' : 'Nova Tarefa')}
-                                        {modalMode === 'edit' && (formData.taskType === 'message' ? 'Editar Recado' : 'Editar Tarefa')}
-                                        {modalMode === 'view' && (formData.taskType === 'message' ? 'Visualizar Registro' : 'Detalhes da Tarefa')}
+                                        {modalMode === 'create' && 'Novo Recado'}
+                                        {modalMode === 'edit' && 'Editar Recado'}
+                                        {modalMode === 'view' && 'Visualizar Registro'}
                                     </h3>
                                     <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-1">Gestão Unificada CDU</span>
                                 </div>
@@ -509,25 +480,24 @@ const Tasks: React.FC = () => {
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="min-w-0 flex-1">
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
-                                                        {formData.taskType === 'message' ? 'Assunto' : 'Título da Atividade'}
+                                                        Assunto
                                                     </label>
                                                     <h2 className="text-gray-900 font-bold text-2xl truncate pr-4">{replacePlaceholders(formData.title)}</h2>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-bold border uppercase ${getPriorityColor(formData.priority as Priority)}`}>
-                                                        {formData.priority}
-                                                    </span>
+                                                    {/* Status/Priority indicators removed per request */}
                                                 </div>
                                             </div>
 
                                             <div className="space-y-3">
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                                    <span className="material-symbols-outlined text-sm">{formData.taskType === 'message' ? 'history_edu' : 'notes'}</span>
-                                                    {formData.taskType === 'message' ? 'Formalização' : 'Descrição'}
+                                                    <span className="material-symbols-outlined text-sm">history_edu</span>
+                                                    Formalização
                                                 </label>
-                                                <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[120px]">
-                                                    {formData.description ? replacePlaceholders(formData.description) : <span className="text-gray-300 italic">Sem conteúdo formalizado.</span>}
-                                                </div>
+                                                <div 
+                                                    className="text-gray-700 text-sm leading-relaxed bg-gray-50/50 p-4 rounded-xl border border-gray-100 min-h-[120px]"
+                                                    dangerouslySetInnerHTML={{ __html: formData.description ? replacePlaceholders(formData.description) : '<span class="text-gray-300 italic">Sem conteúdo formalizado.</span>' }}
+                                                />
                                             </div>
 
                                             {formData.taskType === 'message' && (
@@ -572,16 +542,7 @@ const Tasks: React.FC = () => {
                                                         <p className="text-gray-900 font-bold text-sm leading-tight">{formData.patient || '-'}</p>
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Carteirinha</label>
-                                                            <p className="font-mono text-xs font-bold text-gray-700">{formData.patientCard || '-'}</p>
-                                                        </div>
-                                                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Guia/Aut.</label>
-                                                            <p className="text-gray-900 font-bold text-xs">{formData.patientGuide || '-'}</p>
-                                                        </div>
-                                                    </div>
+                                                    {/* Carteirinha and Guia removed per request */}
 
                                                     <div className="bg-primary/5 p-3 rounded-xl border border-primary/10">
                                                         <label className="text-[9px] font-bold text-primary/60 uppercase tracking-widest block mb-1">Contato Rápido</label>
@@ -605,26 +566,7 @@ const Tasks: React.FC = () => {
                                     {/* Left Column: Form Fields (8 cols) */}
                                     <div className="lg:col-span-8 space-y-5">
 
-                                        {/* TASK TYPE TOGGLE */}
-                                        <div className="flex bg-gray-100 p-1.5 rounded-2xl self-start w-fit mb-4">
-                                            <button
-                                                onClick={() => setFormData({ ...formData, taskType: 'task' })}
-                                                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all ${formData.taskType === 'task' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                            >
-                                                <span className="material-symbols-outlined text-lg">assignment</span>
-                                                Tarefa
-                                            </button>
-                                            <button
-                                                onClick={() => setFormData({ ...formData, taskType: 'message' })}
-                                                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all ${formData.taskType === 'message' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                            >
-                                                <span className="material-symbols-outlined text-lg">chat_bubble</span>
-                                                Recado
-                                            </button>
-                                        </div>
-
-                                        {formData.taskType === 'message' && (
-                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <div className="relative">
                                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Destinatário (Profissional)</label>
                                                     <div className="relative">
@@ -719,56 +661,29 @@ const Tasks: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                        )}
 
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                                                {formData.taskType === 'message' ? 'Assunto do Recado *' : 'Título da Tarefa *'}
+                                                Assunto do Recado *
                                             </label>
                                             <input
                                                 type="text"
                                                 value={formData.title}
                                                 onChange={e => setFormData({ ...formData, title: e.target.value })}
                                                 className="w-full p-4 border border-gray-300 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-base font-medium transition-all shadow-sm"
-                                                placeholder={formData.taskType === 'message' ? "Ex: Documentação Pendente, Aviso Clínico..." : "O que precisa ser feito?"}
+                                                placeholder="Ex: Documentação Pendente, Aviso Clínico..."
                                                 autoFocus
                                             />
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="col-span-2 grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Prioridade</label>
-                                                    <select
-                                                        value={formData.priority}
-                                                        onChange={e => setFormData({ ...formData, priority: e.target.value as Priority })}
-                                                        className="w-full p-3 border border-gray-300 rounded-xl focus:border-primary outline-none text-sm bg-white cursor-pointer shadow-sm"
-                                                    >
-                                                        {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
-                                                    <select
-                                                        value={formData.status}
-                                                        onChange={e => setFormData({ ...formData, status: e.target.value as TaskStatus })}
-                                                        className="w-full p-3 border border-gray-300 rounded-xl focus:border-primary outline-none text-sm bg-white cursor-pointer shadow-sm"
-                                                    >
-                                                        {Object.values(TaskStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                                                {formData.taskType === 'message' ? 'Formalização do Texto *' : 'Detalhes / Observações'}
+                                                Formalização do Texto *
                                             </label>
-                                            <textarea
-                                                value={formData.description}
-                                                onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                                className="w-full p-4 border border-gray-300 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm resize-none h-40 transition-all shadow-sm"
-                                                placeholder={formData.taskType === 'message' ? "Digite aqui o conteúdo completo do recado..." : "Descreva os passos necessários para concluir esta tarefa..."}
+                                            <RichTextEditor
+                                                value={formData.description || ''}
+                                                onChange={v => setFormData({ ...formData, description: v })}
+                                                placeholder="Digite aqui o conteúdo completo do recado..."
                                             />
                                         </div>
                                     </div>
@@ -810,30 +725,7 @@ const Tasks: React.FC = () => {
                                                             disabled={!formData.isPatientRelated}
                                                         />
                                                     </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Carteirinha</label>
-                                                            <input
-                                                                type="text"
-                                                                value={formData.patientCard}
-                                                                onChange={e => setFormData({ ...formData, patientCard: e.target.value })}
-                                                                className="w-full p-3 border border-gray-300 rounded-xl focus:border-primary outline-none text-sm"
-                                                                placeholder="000.000.000"
-                                                                disabled={!formData.isPatientRelated}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Guia</label>
-                                                            <input
-                                                                type="text"
-                                                                value={formData.patientGuide}
-                                                                onChange={e => setFormData({ ...formData, patientGuide: e.target.value })}
-                                                                className="w-full p-3 border border-gray-300 rounded-xl focus:border-primary outline-none text-sm"
-                                                                placeholder="Opcional"
-                                                                disabled={!formData.isPatientRelated}
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    {/* Carteirinha and Guia removed per request */}
                                                     <div>
                                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Telefone</label>
                                                         <input
@@ -863,7 +755,7 @@ const Tasks: React.FC = () => {
                                         type="button"
                                     >
                                         <span className="material-symbols-outlined">delete</span>
-                                        Excluir Tarefa
+                                        Excluir Recado
                                     </button>
                                     <button
                                         onClick={() => currentTask && handleOpenModal('edit', currentTask)}
@@ -886,7 +778,7 @@ const Tasks: React.FC = () => {
                                         className="px-8 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors shadow-lg shadow-primary/30 flex items-center gap-2 transform active:scale-95"
                                     >
                                         {modalMode === 'create' ? <span className="material-symbols-outlined text-lg">add_circle</span> : <span className="material-symbols-outlined text-lg">save</span>}
-                                        {modalMode === 'create' ? (formData.taskType === 'message' ? 'Criar Recado' : 'Criar Tarefa') : 'Salvar Alterações'}
+                                        {modalMode === 'create' ? 'Criar Recado' : 'Salvar Alterações'}
                                     </button>
                                 </>
                             )}
@@ -931,9 +823,10 @@ const Tasks: React.FC = () => {
                             <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase' }}>Assunto do Registro</div>
                             <div style={{ fontSize: '14px', fontWeight: '800', color: '#000' }}>{replacePlaceholders(formData.title)}</div>
                         </div>
-                        <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#333', whiteSpace: 'pre-wrap', flex: 1 }}>
-                            {formData.description ? replacePlaceholders(formData.description) : <span style={{ color: '#aaa', fontStyle: 'italic' }}>Nenhum conteúdo detalhado informado.</span>}
-                        </div>
+                        <div 
+                            style={{ fontSize: '11px', lineHeight: '1.4', color: '#333', flex: 1 }}
+                            dangerouslySetInnerHTML={{ __html: formData.description ? replacePlaceholders(formData.description) : '<span style="color: #aaa; font-style: italic">Nenhum conteúdo detalhado informado.</span>' }}
+                        />
                     </div>
 
                     {/* Compact Footer: Patient on Left, Author & Time on Right */}
@@ -954,20 +847,6 @@ const Tasks: React.FC = () => {
                                             <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{formData.patientPhone || '-'}</div>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
-                                        <div>
-                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha</div>
-                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
-                                                {formData.patientCard || '-'}
-                                            </div>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Guia</div>
-                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
-                                                {formData.patientGuide || '-'}
-                                            </div>
-                                        </div>
-                                    </div>
                                 </>
                             ) : (
                                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -979,15 +858,13 @@ const Tasks: React.FC = () => {
                         {/* RIGHT COLUMN: AUTOR & DATA */}
                         <div style={{ border: '2px solid #555', borderRadius: '6px', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'right' }}>
                             <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Registro e Formalização</div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Emitido Por</div>
-                                <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{replacePlaceholders(formData.authorName || (user?.role === 'reception' ? 'RECEPCIONISTA' : user?.name) || 'SISTEMA UNIFICADO')}</div>
-                                <div style={{ fontSize: '8px', color: '#00665C', fontWeight: 'bold', marginTop: '1px' }}>Unidade: {selectedFloor || 'Não info.'}</div>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', paddingTop: '4px' }}>
-                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Data e Horário do Sistema</div>
-                                <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{new Date().toLocaleString('pt-BR')} • Bauru - SP</div>
-                            </div>
+                             <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                 <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Emitido Por</div>
+                                 <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{replacePlaceholders(formData.authorName || (user?.role === 'reception' ? 'RECEPCIONISTA' : user?.name) || 'SISTEMA UNIFICADO')}</div>
+                             </div>
+                             <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', paddingTop: '4px' }}>
+                                 <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{new Date().toLocaleString('pt-BR')} • Bauru - SP</div>
+                             </div>
                         </div>
 
                     </div>
@@ -1037,9 +914,10 @@ const Tasks: React.FC = () => {
                                             <div style={{ fontSize: '6px', fontWeight: '900', color: '#444', textTransform: 'uppercase' }}>Assunto do Registro</div>
                                             <div style={{ fontSize: '12px', fontWeight: '800', color: '#000' }}>{replacePlaceholders(batchTask.title)}</div>
                                         </div>
-                                        <div style={{ fontSize: '10px', lineHeight: '1.3', color: '#333', whiteSpace: 'pre-wrap', flex: 1, paddingBottom: '4px' }}>
-                                            {batchTask.description ? replacePlaceholders(batchTask.description) : <span style={{ color: '#aaa', fontStyle: 'italic' }}>Nenhum conteúdo detalhado informado.</span>}
-                                        </div>
+                                        <div 
+                                            style={{ fontSize: '10px', lineHeight: '1.3', color: '#333', flex: 1, paddingBottom: '4px' }}
+                                            dangerouslySetInnerHTML={{ __html: batchTask.description ? replacePlaceholders(batchTask.description) : '<span style="color: #aaa; font-style: italic">Nenhum conteúdo detalhado informado.</span>' }}
+                                        />
                                     </div>
 
                                     {/* Compact Footer */}
@@ -1058,20 +936,7 @@ const Tasks: React.FC = () => {
                                                             <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#333' }}>{batchTask.patientPhone || '-'}</div>
                                                         </div>
                                                     </div>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
-                                                        <div>
-                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Carteirinha</div>
-                                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
-                                                                {batchTask.patientCard || '-'}
-                                                            </div>
-                                                        </div>
-                                                        <div style={{ textAlign: 'right' }}>
-                                                            <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Guia</div>
-                                                            <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333', fontFamily: 'monospace' }}>
-                                                                {batchTask.patientGuide || '-'}
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    {/* Carteirinha/Guia removed per request */}
                                                 </>
                                             ) : (
                                                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1082,15 +947,13 @@ const Tasks: React.FC = () => {
 
                                         <div style={{ border: '2px solid #555', borderRadius: '6px', padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'right' }}>
                                             <div style={{ fontSize: '7px', fontWeight: '900', color: '#444', textTransform: 'uppercase', marginBottom: '4px', borderBottom: '1.5px solid #ccc', paddingBottom: '3px' }}>Registro e Formalização</div>
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Emitido Por</div>
-                                                <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{replacePlaceholders(batchTask.authorName || 'SISTEMA UNIFICADO')}</div>
-                                                <div style={{ fontSize: '8px', color: '#00665C', fontWeight: 'bold', marginTop: '1px' }}>Unidade: {selectedFloor || 'Não info.'}</div>
-                                            </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', paddingTop: '4px' }}>
-                                                <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Data do Registro Local</div>
-                                                <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{batchTask.date || new Date().toLocaleString('pt-BR')} • Bauru - SP</div>
-                                            </div>
+                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                 <div style={{ fontSize: '6px', fontWeight: '900', color: '#888', textTransform: 'uppercase' }}>Emitido Por</div>
+                                                 <div style={{ fontSize: '11px', fontWeight: '900', color: '#111' }}>{replacePlaceholders(batchTask.authorName || 'SISTEMA UNIFICADO')}</div>
+                                             </div>
+                                             <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', paddingTop: '4px' }}>
+                                                 <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#333' }}>{batchTask.date || new Date().toLocaleString('pt-BR')} • Bauru - SP</div>
+                                             </div>
                                         </div>
                                     </div>
                                 </div>
