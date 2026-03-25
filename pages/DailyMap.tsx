@@ -340,14 +340,20 @@ const DailyMap: React.FC = () => {
 
     // --- Render Content ---
     const ReportContent = ({ isPdf = false }: { isPdf?: boolean }) => (
+        <>
+        {isPdf && (
+            <style type="text/css" media="print">
+                {`@page { size: A4 portrait; margin: 10mm; }`}
+            </style>
+        )}
         <div style={{
-            width: '200mm',
-            minHeight: '200mm',
+            width: printPeriod === 'both' ? '20cm' : '13cm',
+            height: '15cm',
             backgroundColor: 'white',
             fontFamily: '"Segoe UI", Roboto, Arial, sans-serif',
             display: 'flex',
             flexDirection: 'column',
-            padding: '12mm 10mm 10mm 10mm',
+            padding: '5mm',
             boxSizing: 'border-box',
             position: 'relative',
             color: '#111'
@@ -359,69 +365,79 @@ const DailyMap: React.FC = () => {
             )}
 
             {/* Header */}
-            <div style={{ borderBottom: '3px solid #00665C', paddingBottom: '8px', marginBottom: '14px', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                    <div style={{ backgroundColor: '#00665C', color: 'white', padding: '5px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>local_hospital</span>
+            <div style={{ borderBottom: '2px solid #00665C', paddingBottom: '4px', marginBottom: '6px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                    <div style={{ backgroundColor: '#00665C', color: 'white', padding: '3px 6px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>local_hospital</span>
                     </div>
-                    <h1 style={{ fontWeight: 900, fontSize: '18px', color: '#1a1a1a', letterSpacing: '-0.3px', margin: 0 }}>
+                    <h1 style={{ fontWeight: 900, fontSize: '14px', color: '#1a1a1a', letterSpacing: '-0.3px', margin: 0 }}>
                         Mapa Diário - {selectedFloor}
                     </h1>
                 </div>
-                <p style={{ fontWeight: 700, fontSize: '13px', color: '#00665C', textTransform: 'capitalize', margin: '0 0 0 42px' }}>
+                <p style={{ fontWeight: 700, fontSize: '10px', color: '#00665C', textTransform: 'capitalize', margin: '0 0 0 32px' }}>
                     {formatDisplayDate(currentDate)}
                 </p>
             </div>
 
-            {/* Grid - 3 columns */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', position: 'relative', zIndex: 10 }}>
-                {rooms.map((room) => {
+            {/* List Format */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', position: 'relative', zIndex: 10, flex: 1 }}>
+                {[...rooms]
+                    .sort((a, b) => {
+                        const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+                        const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+                        if (numA !== numB) return numA - numB;
+                        return a.name.localeCompare(b.name);
+                    })
+                    .map((room) => {
                     const morningAllocs = getAllocationsForSlot(room.id, 'morning');
                     const afternoonAllocs = getAllocationsForSlot(room.id, 'afternoon');
 
-                    const renderPdfSlotDoctors = (allocs: DBAllocation[], shiftLabel: string) => (
-                        <div style={{ flex: 1, padding: '5px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                                <span style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#00665C' }}>{shiftLabel}</span>
-                                {allocs.length === 0 && <span style={{ fontSize: '7px', color: '#ccc', fontStyle: 'italic' }}>Livre</span>}
+                    const renderPdfSlotDoctorsRow = (allocs: DBAllocation[], shiftLabel: string) => (
+                        <div style={{ flex: 1, padding: '2px 4px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1px' }}>
+                                <span style={{ fontSize: '7px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#00665C' }}>{shiftLabel}</span>
+                                {allocs.length === 0 && <span style={{ fontSize: '7px', color: '#ccc', fontStyle: 'italic', fontWeight: 'bold' }}>Livre</span>}
                             </div>
-                            {allocs.map((alloc, idx) => {
-                                const doc = getDoctor(alloc.doctor_id);
-                                return doc ? (
-                                    <div key={alloc.id} style={{ width: '100%', marginTop: idx > 0 ? '3px' : '1px', paddingTop: idx > 0 ? '3px' : '0', borderTop: idx > 0 ? '1.5px dashed #666' : 'none' }}>
-                                        <p style={{ fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap', fontSize: '11px', color: '#111', margin: 0, lineHeight: 1.2 }}>{doc.name}</p>
-                                        <p style={{ fontWeight: 900, fontSize: '8px', color: '#555', margin: 0, lineHeight: 1.3 }}>
-                                            {alloc.start_time && alloc.end_time ? `${alloc.start_time} - ${alloc.end_time}` : 'Todo o Período'}
-                                        </p>
-                                    </div>
-                                ) : null;
-                            })}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                                {allocs.map((alloc) => {
+                                    const doc = getDoctor(alloc.doctor_id);
+                                    return doc ? (
+                                        <div key={alloc.id} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                                            <span style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '12px', color: '#000', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.name}</span>
+                                            <span style={{ fontWeight: 900, fontSize: '7.5px', color: '#555', backgroundColor: '#f0f0f0', padding: '1.5px 3px', borderRadius: '2px', lineHeight: 1, flexShrink: 0 }}>
+                                                {alloc.start_time && alloc.end_time ? `${alloc.start_time}-${alloc.end_time}` : 'Integral'}
+                                            </span>
+                                        </div>
+                                    ) : null;
+                                })}
+                            </div>
                         </div>
                     );
 
                     return (
-                        <div key={room.id} style={{ border: '2px solid #222', borderRadius: '6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', backgroundColor: 'white', minHeight: '100px' }}>
-                            <div style={{ padding: '4px 8px', borderBottom: '2px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, backgroundColor: '#f5f5f5' }}>
-                                <span style={{ fontWeight: 900, fontSize: '13px', textTransform: 'uppercase', color: '#00665C' }}>{room.name}</span>
+                        <div key={room.id} style={{ border: '1px solid #222', borderRadius: '4px', overflow: 'hidden', display: 'flex', backgroundColor: 'white', minHeight: '8mm', pageBreakInside: 'avoid' }}>
+                            <div style={{ width: '130px', padding: '2px 6px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', justifyContent: 'center', backgroundColor: '#f5f5f5', flexShrink: 0 }}>
+                                <span style={{ fontWeight: 900, fontSize: '15px', textTransform: 'uppercase', color: '#00665C', marginBottom: '1px', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{room.name}</span>
                                 {room.extension && (
-                                    <span style={{ fontWeight: 900, fontSize: '13px', color: '#111', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>call</span>
+                                    <span style={{ fontWeight: 900, fontSize: '10px', color: '#111', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '1px' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>call</span>
                                         {room.extension}
                                     </span>
                                 )}
                             </div>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                {(printPeriod === 'morning' || printPeriod === 'both') && renderPdfSlotDoctors(morningAllocs, 'Manhã')}
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
+                                {(printPeriod === 'morning' || printPeriod === 'both') && renderPdfSlotDoctorsRow(morningAllocs, 'Manhã')}
                                 {(printPeriod === 'morning' || printPeriod === 'both') && (printPeriod === 'afternoon' || printPeriod === 'both') && (
-                                    <div style={{ borderTop: '2px solid #444' }} />
+                                    <div style={{ borderLeft: '1px solid #222' }} />
                                 )}
-                                {(printPeriod === 'afternoon' || printPeriod === 'both') && renderPdfSlotDoctors(afternoonAllocs, 'Tarde')}
+                                {(printPeriod === 'afternoon' || printPeriod === 'both') && renderPdfSlotDoctorsRow(afternoonAllocs, 'Tarde')}
                             </div>
                         </div>
                     );
                 })}
             </div>
         </div>
+        </>
     );
 
     return (
